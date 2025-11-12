@@ -7,9 +7,10 @@ export default function App() {
     <BrowserRouter>
       <div className="h-screen w-screen">
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/builder" element={<BuilderView />} />
+          <Route path="/builder/:flow_uid" element={<BuilderView />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </div>
     </BrowserRouter>

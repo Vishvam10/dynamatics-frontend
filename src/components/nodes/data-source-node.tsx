@@ -1,10 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
+import { useReactFlow } from "@xyflow/react";
 
-export const DataSourceNode = () => {
-  const [mode, setMode] = useState<"url" | "upload">("url");
-  const [url, setUrl] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+export const DataSourceNode = ({ id, config }: any) => {
+  const { setNodes } = useReactFlow();
+  const [mode, setMode] = useState<"url" | "upload">(config?.mode || "url");
+  const [url, setUrl] = useState(config?.url || "");
+  const [file, setFile] = useState<File | null>(config?.file || null);
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) => (n.id === id ? { ...n, config: { mode, url, file } } : n))
+    );
+  }, [id, mode, url, file, setNodes]);
 
   return (
     <BaseNode

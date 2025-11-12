@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Workflow, BarChart3, Settings } from "lucide-react";
+import { Home, Workflow } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function DashboardSidebar() {
@@ -8,15 +8,12 @@ export function DashboardSidebar() {
   const location = useLocation();
 
   const goToNewFlow = () => {
-    const flowId = crypto.randomUUID();
-    navigate(`/builder/${flowId}`);
+    navigate("/builder");
   };
 
   const navItems = [
     { name: "Overview", icon: Home, path: "/dashboard" },
     { name: "Flows", icon: Workflow, action: goToNewFlow },
-    { name: "Analytics", icon: BarChart3, path: "/analytics" },
-    { name: "Settings", icon: Settings, path: "/settings" },
   ];
 
   return (

@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
+import { useReactFlow } from "@xyflow/react";
 
-export const ExampleDataNode = () => {
-  const [dataset, setDataset] = useState("");
+export const ExampleDataNode = ({ id, config }: any) => {
+  const { setNodes } = useReactFlow();
+  const [dataset, setDataset] = useState(config?.input || "");
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) => (n.id === id ? { ...n, config: { input: dataset } } : n))
+    );
+  }, [id, dataset, setNodes]);
 
   return (
     <BaseNode
@@ -16,10 +24,11 @@ export const ExampleDataNode = () => {
         value={dataset}
         onChange={(e) => setDataset(e.target.value)}
       >
-        <option value="">Select dataset</option>
-        <option value="sales">Sales Data</option>
-        <option value="users">User Profiles</option>
-        <option value="inventory">Inventory</option>
+        <option value="">Select dataset...</option>
+        <option value="brandkit">Brandkit</option>
+        <option value="automate">Automate</option>
+        <option value="launch">Launch</option>
+        <option value="test">Test</option>
       </select>
     </BaseNode>
   );

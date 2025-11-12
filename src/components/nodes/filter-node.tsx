@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
 
-const FILTERS: any = {
+const FILTERS: Record<string, string[]> = {
   number: ["gt", "gte", "lt", "lte", "eq", "neq"],
   string: ["contains", "ncontains", "startswith", "nstartswith", "eq", "neq"],
   boolean: ["eq", "neq"],
@@ -11,19 +11,17 @@ const FILTERS: any = {
 
 export const FilterNode = ({ id, data }: any) => {
   const { fields = [], fieldTypes = {}, config = {} } = data;
-  const [field, setField] = useState(config.field || "");
-  const [condition, setCondition] = useState(config.condition || "");
-  const [value, setValue] = useState(config.value ?? "");
   const { setNodes } = useReactFlow();
+
+  const [field, setField] = useState(config?.field || "");
+  const [condition, setCondition] = useState(config?.condition || "");
+  const [value, setValue] = useState(config?.value ?? "");
 
   const type = fieldTypes?.[field] ?? "string";
 
-  const conditions = useMemo(() => {
-    if (FILTERS[type]) return FILTERS[type];
-    return FILTERS.default;
-  }, [type]);
+  const conditions = useMemo(() => FILTERS[type] || FILTERS.default, [type]);
 
-  // 🔁 Sync config with graph — cast to number if needed
+  // 🔁 Sync config with top-level node
   useEffect(() => {
     const parsedValue =
       type === "number" && value !== "" && !isNaN(Number(value))
@@ -35,10 +33,8 @@ export const FilterNode = ({ id, data }: any) => {
         n.id === id
           ? {
               ...n,
-              data: {
-                ...n.data,
-                config: { field, condition, value: parsedValue },
-              },
+              config: { field, condition, value: parsedValue },
+              data: { ...n.data },
             }
           : n
       )
@@ -47,9 +43,9 @@ export const FilterNode = ({ id, data }: any) => {
 
   return (
     <BaseNode title="Filter" typeLabel="Transform">
-      {/* Field Selector */}
-      <select
-        className="w-full border rounded p-1 text-sm"
+     <div className="flex flex-col w-24">
+       <select
+        className="border rounded p-1 text-sm"
         value={field}
         onChange={(e) => setField(e.target.value)}
       >
@@ -61,9 +57,8 @@ export const FilterNode = ({ id, data }: any) => {
         ))}
       </select>
 
-      {/* Condition Selector */}
       <select
-        className="w-full border rounded p-1 text-sm mt-2"
+        className="border rounded p-1 text-sm mt-2"
         value={condition}
         onChange={(e) => setCondition(e.target.value)}
       >
@@ -75,14 +70,14 @@ export const FilterNode = ({ id, data }: any) => {
         ))}
       </select>
 
-      {/* Value Input */}
       <input
-        className="w-full border rounded p-1 text-sm mt-2"
+        className="border rounded p-1 text-sm mt-2"
         type={type === "number" ? "number" : "text"}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Value"
       />
+     </div>
     </BaseNode>
   );
 };

@@ -4,34 +4,24 @@ import { useReactFlow } from "@xyflow/react";
 
 const MERGE_TYPES = ["concat", "union", "intersection"];
 
-export const MergeNode = ({ id, data }: any) => {
-  const { config = {} } = data;
-  const [mergeType, setMergeType] = useState(config.mergeType || "concat");
-  const [keyField, setKeyField] = useState(config.keyField || "");
+export const MergeNode = ({ id, data, config }: any) => {
   const { fields = [] } = data;
-
   const { setNodes } = useReactFlow();
 
-  // Sync node config with React Flow state
+  const [mergeType, setMergeType] = useState(config?.mergeType || "concat");
+  const [keyField, setKeyField] = useState(config?.keyField || "");
+
   useEffect(() => {
     setNodes((nds) =>
       nds.map((n) =>
-        n.id === id
-          ? {
-              ...n,
-              data: {
-                ...n.data,
-                config: { mergeType, keyField },
-              },
-            }
-          : n
+        n.id === id ? { ...n, config: { mergeType, keyField } } : n
       )
     );
-  }, [mergeType, keyField, id, setNodes]);
+  }, [id, mergeType, keyField, setNodes]);
 
   return (
     <BaseNode title="Merge" typeLabel="Transform" inputs={2} outputs={1}>
-      {/* Merge Type Selector */}
+      {/* Merge Type */}
       <div className="flex flex-col space-y-1">
         <label className="text-[10px] font-medium">Merge Type</label>
         <select
@@ -47,7 +37,7 @@ export const MergeNode = ({ id, data }: any) => {
         </select>
       </div>
 
-      {/* Key Field Selector */}
+      {/* Key Field */}
       <div className="flex flex-col space-y-1 mt-2">
         <label className="text-[10px] font-medium">Key Field</label>
         <select

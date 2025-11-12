@@ -7,18 +7,17 @@ const AGGREGATES = ["count", "sum", "avg", "min", "max"];
 
 export const GroupNode = ({ id, data }: any) => {
   const { fields = [], config = {} } = data;
+  const { setNodes } = useReactFlow();
 
   const [selectedFields, setSelectedFields] = useState<string[]>(
-    config.selectedFields || [""]
+    config?.selectedFields || [""]
   );
   const [groupByFields, setGroupByFields] = useState<string[]>(
-    config.groupByFields || [""]
+    config?.groupByFields || [""]
   );
   const [aggregates, setAggregates] = useState<string[]>(
-    config.aggregates || [""]
+    config?.aggregates || [""]
   );
-
-  const { setNodes } = useReactFlow();
 
   useEffect(() => {
     setNodes((nds) =>
@@ -26,10 +25,12 @@ export const GroupNode = ({ id, data }: any) => {
         n.id === id
           ? {
               ...n,
-              data: {
-                ...n.data,
-                config: { selectedFields, groupByFields, aggregates },
+              config: {
+                fields: selectedFields,
+                group_by: groupByFields,
+                aggregations: aggregates,
               },
+              data: { ...n.data },
             }
           : n
       )
@@ -53,118 +54,58 @@ export const GroupNode = ({ id, data }: any) => {
     setter(copy);
   };
 
+  const renderSelectList = (
+    arr: string[],
+    setter: any,
+    options: string[],
+    label: string
+  ) => (
+    <div>
+      <div className="flex justify-between items-center">
+        <span className="font-medium">{label}</span>
+        <button
+          onClick={() => addItem(setter, arr)}
+          className="text-purple-600 hover:text-purple-800"
+        >
+          <Plus size={12} />
+        </button>
+      </div>
+      {arr.map((val, i) => (
+        <div key={i} className="flex gap-1 items-center mt-1">
+          <select
+            value={val}
+            onChange={(e) => updateItem(setter, arr, i, e.target.value)}
+            className="flex-1 border rounded p-1 text-[10px]"
+          >
+            <option value="">Select</option>
+            {options.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => removeItem(setter, arr, i)}
+            className="text-gray-400 hover:text-red-500"
+          >
+            <Trash2 size={10} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <BaseNode title="Group" typeLabel="Aggregate">
       <div className="space-y-4">
-        {/* 🔹 Group By */}
-        <div>
-          <div className="flex justify-between items-center">
-            <span className="font-medium">Group By</span>
-            <button
-              onClick={() => addItem(setGroupByFields, groupByFields)}
-              className="text-purple-600 hover:text-purple-800"
-            >
-              <Plus size={12} />
-            </button>
-          </div>
-          {groupByFields.map((f, i) => (
-            <div key={i} className="flex gap-1 items-center mt-1">
-              <select
-                value={f}
-                onChange={(e) =>
-                  updateItem(setGroupByFields, groupByFields, i, e.target.value)
-                }
-                className="flex-1 border rounded p-1 text-[10px]"
-              >
-                <option value="">Select field</option>
-                {fields.map((fld: string) => (
-                  <option key={fld}>{fld}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => removeItem(setGroupByFields, groupByFields, i)}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={10} />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* 🔹 Fields */}
-        <div>
-          <div className="flex justify-between items-center">
-            <span className="font-medium">Output Fields</span>
-            <button
-              onClick={() => addItem(setSelectedFields, selectedFields)}
-              className="text-purple-600 hover:text-purple-800"
-            >
-              <Plus size={12} />
-            </button>
-          </div>
-          {selectedFields.map((f, i) => (
-            <div key={i} className="flex gap-1 items-center mt-1">
-              <select
-                value={f}
-                onChange={(e) =>
-                  updateItem(
-                    setSelectedFields,
-                    selectedFields,
-                    i,
-                    e.target.value
-                  )
-                }
-                className="flex-1 border rounded p-1 text-[10px]"
-              >
-                <option value="">Select field</option>
-                {fields.map((fld: string) => (
-                  <option key={fld}>{fld}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => removeItem(setSelectedFields, selectedFields, i)}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={10} />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* 🔹 Aggregates */}
-        <div>
-          <div className="flex justify-between items-center">
-            <span className="font-medium">Aggregates</span>
-            <button
-              onClick={() => addItem(setAggregates, aggregates)}
-              className="text-purple-600 hover:text-purple-800"
-            >
-              <Plus size={12} />
-            </button>
-          </div>
-          {aggregates.map((agg, i) => (
-            <div key={i} className="flex gap-1 items-center mt-1">
-              <select
-                value={agg}
-                onChange={(e) =>
-                  updateItem(setAggregates, aggregates, i, e.target.value)
-                }
-                className="flex-1 border rounded p-1 text-[10px]"
-              >
-                <option value="">Select aggregate</option>
-                {AGGREGATES.map((a) => (
-                  <option key={a}>{a}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => removeItem(setAggregates, aggregates, i)}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={10} />
-              </button>
-            </div>
-          ))}
-        </div>
+        {renderSelectList(groupByFields, setGroupByFields, fields, "Group By")}
+        {renderSelectList(
+          selectedFields,
+          setSelectedFields,
+          fields,
+          "Output Fields"
+        )}
+        {renderSelectList(aggregates, setAggregates, AGGREGATES, "Aggregates")}
       </div>
     </BaseNode>
   );

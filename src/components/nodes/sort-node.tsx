@@ -1,16 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
+import { useReactFlow } from "@xyflow/react";
 
-export const SortNode = ({ data }: any) => {
-  const { fields = [] } = data;
-  const [field, setField] = useState("");
-  const [asc, setAsc] = useState(true);
+export const SortNode = ({ id, data }: any) => {
+  const { fields = [], config = {} } = data;
+  const { setNodes } = useReactFlow();
+
+  const [field, setField] = useState(config?.field || "");
+  const [asc, setAsc] = useState(config?.asc ?? true);
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === id ? { ...n, config: { field, asc }, data: { ...n.data } } : n
+      )
+    );
+  }, [id, field, asc, setNodes]);
 
   return (
-    <BaseNode
-      title="Sort"
-      typeLabel="Transform"
-    >
+    <BaseNode title="Sort" typeLabel="Transform">
       <select
         value={field}
         onChange={(e) => setField(e.target.value)}
@@ -18,11 +26,13 @@ export const SortNode = ({ data }: any) => {
       >
         <option value="">Select field</option>
         {fields.map((f: string) => (
-          <option key={f}>{f}</option>
+          <option key={f} value={f}>
+            {f}
+          </option>
         ))}
       </select>
 
-      <label className="flex items-center gap-2 text-[10px]">
+      <label className="flex items-center gap-2 text-[10px] mt-2">
         <input type="checkbox" checked={asc} onChange={() => setAsc(!asc)} />
         {asc ? "Ascending" : "Descending"}
       </label>

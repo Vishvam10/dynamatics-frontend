@@ -1,4 +1,4 @@
-import { Handle, Position } from "@xyflow/react";
+import { Handle, NodeResizer, Position } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import { nodeColors } from "@/utils/node-colours";
 
@@ -24,7 +24,7 @@ export function BaseNode({
   return (
     <div
       className={cn(
-        "relative text-xs rounded-lg bg-white shadow-sm flex flex-col w-44 border border-gray-200",
+        "relative text-xs rounded-lg bg-white shadow-sm flex flex-col min-w-32 border border-gray-200",
         "h-auto", // 🔹 allow it to grow freely
         className
       )}
@@ -32,6 +32,7 @@ export function BaseNode({
         borderTop: `4px solid ${color}`,
       }}
     >
+
       {/* Input Handles */}
       {Array.from({ length: inputs }).map((_, i) => (
         <Handle
