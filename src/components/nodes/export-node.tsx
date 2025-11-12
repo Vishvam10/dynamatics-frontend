@@ -30,9 +30,19 @@ export const ExportDataNode = ({ id, executedData = [] }: ExportNodeProps) => {
 
   const columns = tableData[0] ? Object.keys(tableData[0]) : [];
 
+  // Function to safely render cell values
+  const renderCellValue = (value: any) => {
+    if (typeof value === "object" && value !== null) {
+      return Array.isArray(value)
+        ? JSON.stringify(value)
+        : JSON.stringify(value);
+    }
+    return value ?? "";
+  };
+
   return (
     <BaseNode title="Export Data" typeLabel="Export" inputs={1} outputs={0}>
-      <div className="space-y-2 text-[10px]">
+      <div className="space-y-2 text-[10px] max-w-120">
         <label className="block text-[10px]">File Format</label>
         <select
           value={format}
@@ -57,7 +67,9 @@ export const ExportDataNode = ({ id, executedData = [] }: ExportNodeProps) => {
                 {tableData.map((row, i) => (
                   <TableRow key={i}>
                     {columns.map((col) => (
-                      <TableCell key={col}>{row[col]}</TableCell>
+                      <TableCell key={col}>
+                        {renderCellValue(row[col])}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))}

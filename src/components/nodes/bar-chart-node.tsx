@@ -1,91 +1,141 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { BaseNode } from "./base-node";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 interface BarChartNodeProps {
-  data: {
-    fields: string[];
-  };
+  nodeId: string;
+  executedData?: any[];
+  fieldTypes?: Record<string, string>;
+  config?: { xField?: string; yField?: string };
 }
 
-const defaultChartData = [
-  { name: "A", value: 40 },
-  { name: "B", value: 30 },
-  { name: "C", value: 20 },
-  { name: "D", value: 10 },
-];
+export const BarChartNode = ({
+  nodeId,
+  executedData = [],
+  fieldTypes = {},
+  config = {},
+}: BarChartNodeProps) => {
+  const [xField, setXField] = useState("");
+  const [yField, setYField] = useState("");
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [stringFields, setStringFields] = useState<string[]>([]);
+  const [numberFields, setNumberFields] = useState<string[]>([]);
 
-const chartConfig: ChartConfig = {
-  value: { label: "Value", color: "#805ad5" }, // purple-500
-};
+  const actualData = useMemo(() => {
+    const nodeResult = executedData.find((d) => d.node_id === nodeId);
+    return nodeResult?.output || [];
+  }, [executedData, nodeId]);
 
-export const BarChartNode = ({ data }: BarChartNodeProps) => {
-  const { fields = [] } = data;
-  const [xField, setXField] = useState(fields[0] || "");
-  const [yField, setYField] = useState(fields[1] || "");
+  useEffect(() => {
+    if (!actualData.length) return;
 
-  const hasData = fields && fields.length > 0;
+    const fields = Object.keys(actualData[0] || {});
+    const strFields = fields.filter((f) => fieldTypes[f] === "string");
+    const numFields = fields.filter((f) => fieldTypes[f] === "number");
 
+    setStringFields(strFields);
+    setNumberFields(numFields);
+
+    setXField(config.xField || strFields[0] || fields[0] || "");
+    setYField(config.yField || numFields[0] || fields[1] || "");
+  }, [actualData, fieldTypes, config]);
+
+  useEffect(() => {
+    if (!xField || !yField) return;
+
+    const mapped = actualData.map((row: any) => ({
+      name: row[xField] ?? "Unknown",
+      value: row[yField] ?? 0,
+    }));
+
+    setChartData(mapped);
+  }, [actualData, xField, yField]);
+
+  const hasData = chartData.length > 0;
   return (
     <BaseNode
       title="Bar Chart"
       typeLabel="Visualize"
       inputs={1}
       outputs={0}
-      className="border-t-purple-600"
+      className="border-t-green-600"
     >
-      <div className="space-y-2 text-[10px]">
-        {/* Field selectors */}
-        <div>
-          <label className="block mb-1 text-gray-600">X-axis</label>
-          <select
-            value={xField}
-            onChange={(e) => setXField(e.target.value)}
-            className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
-          >
-            {fields.map((f) => (
-              <option key={f}>{f}</option>
-            ))}
-          </select>
-        </div>
+      {/* X-axis selector */}
+      <div>
+        <label className="block mb-1 text-gray-600">X-axis</label>
+        <select
+          value={xField}
+          onChange={(e) => setXField(e.target.value)}
+          className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-green-300"
+        >
+          {stringFields.map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        <div>
-          <label className="block mb-1 text-gray-600">Y-axis</label>
-          <select
-            value={yField}
-            onChange={(e) => setYField(e.target.value)}
-            className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
-          >
-            {fields.map((f) => (
-              <option key={f}>{f}</option>
-            ))}
-          </select>
-        </div>
+      {/* Y-axis selector */}
+      <div>
+        <label className="block mb-1 text-gray-600">Y-axis</label>
+        <select
+          value={yField}
+          onChange={(e) => setYField(e.target.value)}
+          className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-green-300"
+        >
+          {numberFields.map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        {/* Chart */}
-        {hasData ? (
-          <div className="flex justify-center pt-2">
-            <ChartContainer config={chartConfig} className="w-28 h-28">
-              <BarChart width={110} height={110} data={defaultChartData}>
-                <XAxis dataKey="name" hide />
-                <YAxis hide />
+      {/* Chart */}
+      {hasData ? (
+        <div className="space-y-2 text-[10px] w-80 mr-4">
+          <div className="flex justify-center mt-8 mb-4">
+            <ChartContainer
+              config={{ value: { label: "Value", color: "#4ade80" } }}
+              className="w-full h-auto"
+            >
+              <BarChart width={120} height={120} data={chartData}>
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  label={{
+                    value: xField,
+                    position: "insideBottom",
+                    offset: -5,
+                  }}
+                  tick={{ fontSize: 10 }}
+                />
+                <YAxis
+                  label={{
+                    value: yField,
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: 5,
+                  }}
+                  tick={{ fontSize: 10 }}
+                />
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                <Bar dataKey="value" fill="#805ad5" radius={[3, 3, 0, 0]} />
+                <Bar data={chartData} dataKey="value" fill="#9f7aea" />
               </BarChart>
             </ChartContainer>
           </div>
-        ) : (
-          <div className="text-center text-gray-400 text-xs pt-4">
-            No data to visualize
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="text-center text-gray-400 text-xs pt-4">
+          No data to visualize
+        </div>
+      )}
     </BaseNode>
   );
 };

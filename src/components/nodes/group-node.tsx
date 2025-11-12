@@ -3,22 +3,37 @@ import { Plus, Trash2 } from "lucide-react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
 
-const AGGREGATES = ["count", "sum", "avg", "min", "max"];
+const AGGREGATES = [
+  "count",
+  "sum",
+  "mean",
+  "min",
+  "max",
+  "std",
+  "var",
+  "count",
+  "nunique",
+  "median",
+];
 
 export const GroupNode = ({ id, data }: any) => {
   const { fields = [], config = {} } = data;
   const { setNodes } = useReactFlow();
 
+  // Initialize from config or empty arrays
   const [selectedFields, setSelectedFields] = useState<string[]>(
-    config?.selectedFields || [""]
+    config?.fields && config.fields.length ? config.fields : []
   );
   const [groupByFields, setGroupByFields] = useState<string[]>(
-    config?.groupByFields || [""]
+    config?.group_by && config.group_by.length ? config.group_by : []
   );
   const [aggregates, setAggregates] = useState<string[]>(
-    config?.aggregates || [""]
+    config?.aggregations && config.aggregations.length
+      ? config.aggregations
+      : []
   );
 
+  // Sync with top-level node config
   useEffect(() => {
     setNodes((nds) =>
       nds.map((n) =>
@@ -41,7 +56,7 @@ export const GroupNode = ({ id, data }: any) => {
   const removeItem = (setter: any, arr: string[], idx: number) => {
     const copy = [...arr];
     copy.splice(idx, 1);
-    setter(copy.length ? copy : [""]);
+    setter(copy);
   };
   const updateItem = (
     setter: any,
@@ -62,7 +77,7 @@ export const GroupNode = ({ id, data }: any) => {
   ) => (
     <div>
       <div className="flex justify-between items-center">
-        <span className="font-medium">{label}</span>
+        <span className="font-medium text-[10px]">{label}</span>
         <button
           onClick={() => addItem(setter, arr)}
           className="text-purple-600 hover:text-purple-800"
@@ -100,12 +115,17 @@ export const GroupNode = ({ id, data }: any) => {
       <div className="space-y-4">
         {renderSelectList(groupByFields, setGroupByFields, fields, "Group By")}
         {renderSelectList(
+          aggregates,
+          setAggregates,
+          AGGREGATES,
+          "Aggregate Func"
+        )}
+        {renderSelectList(
           selectedFields,
           setSelectedFields,
           fields,
-          "Output Fields"
+          "Aggregate On"
         )}
-        {renderSelectList(aggregates, setAggregates, AGGREGATES, "Aggregates")}
       </div>
     </BaseNode>
   );

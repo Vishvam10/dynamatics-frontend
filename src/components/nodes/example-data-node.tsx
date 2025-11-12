@@ -2,15 +2,31 @@ import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
 
-export const ExampleDataNode = ({ id, config }: any) => {
+export const ExampleDataNode = ({ id, config, fetchFieldTypes }: any) => {
   const { setNodes } = useReactFlow();
   const [dataset, setDataset] = useState(config?.input || "");
 
+  // Update node config whenever dataset changes
   useEffect(() => {
+    if (!dataset) return; // don't update if no selection
+
     setNodes((nds) =>
-      nds.map((n) => (n.id === id ? { ...n, config: { input: dataset } } : n))
+      nds.map((n) =>
+        n.id === id
+          ? {
+              ...n,
+              data: {
+                ...(n.data || {}),
+                config: { ...(n.data?.config || {}), input: dataset },
+              },
+            }
+          : n
+      )
     );
-  }, [id, dataset, setNodes]);
+
+    // Call fetchFieldTypes only if a dataset is selected
+    fetchFieldTypes?.(id);
+  }, [dataset, id, setNodes, fetchFieldTypes]);
 
   return (
     <BaseNode

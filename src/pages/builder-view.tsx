@@ -17,7 +17,6 @@ import {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -34,7 +33,7 @@ import {
   ExampleDataNode,
   DataSourceNode,
   SortNode,
-} from "./../components/nodes";
+} from "@/components/nodes";
 import { BuilderSidebar } from "@/components/builder-sidebar";
 import { ExportDataNode } from "@/components/nodes/export-node";
 import { PieChartNode } from "@/components/nodes/pie-chart-node";
@@ -46,7 +45,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const fields = ["id", "name", "age", "country", "salary"];
-const fieldTypes = {
+const defaultFieldTypes = {
   id: "number",
   name: "string",
   age: "number",
@@ -63,19 +62,22 @@ interface Flow {
 function BuilderCanvas() {
   const navigate = useNavigate();
   const { flow_uid } = useParams<{ flow_uid: string }>();
-
   const reactFlowInstance = useReactFlow();
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [flowData, setFlowData] = useState<Flow | null>(null);
+
   const [executedFlowData, setExecutedFlowData] = useState<any[]>([]);
+  const [fieldTypesMap, setFieldTypesMap] = useState<Record<string, any>>({});
 
   const [loading, setLoading] = useState(true);
-
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [flowName, setFlowName] = useState("");
 
+  // -------------------------
+  // Node Types
+  // -------------------------
   const nodeTypes = useMemo(
     () => ({
       filter: FilterNode,
@@ -87,50 +89,70 @@ function BuilderCanvas() {
       export: (props: any) => (
         <ExportDataNode {...props} executedData={executedFlowData} />
       ),
-      pieChart: PieChartNode,
-      barChart: BarChartNode,
-      lineChart: LineChartNode,
-      areaChart: AreaChartNode,
+      pieChart: (props: any) => (
+        <PieChartNode
+          {...props}
+          executedData={executedFlowData}
+          nodeId={props.id}
+          fieldTypes={fieldTypesMap[props.id] || defaultFieldTypes}
+          config={props.data?.config || {}}
+        />
+      ),
+      barChart: (props: any) => (
+        <BarChartNode
+          {...props}
+          executedData={executedFlowData}
+          nodeId={props.id}
+          fieldTypes={fieldTypesMap[props.id] || defaultFieldTypes}
+          config={props.data?.config || {}}
+        />
+      ),
+      lineChart: (props: any) => (
+        <LineChartNode
+          {...props}
+          executedData={executedFlowData}
+          nodeId={props.id}
+          fieldTypes={fieldTypesMap[props.id] || defaultFieldTypes}
+          config={props.data?.config || {}}
+        />
+      ),
+      areaChart: (props: any) => (
+        <AreaChartNode
+          {...props}
+          executedData={executedFlowData}
+          nodeId={props.id}
+          fieldTypes={fieldTypesMap[props.id] || defaultFieldTypes}
+          config={props.data?.config || {}}
+        />
+      ),
     }),
-    [executedFlowData]
+    [executedFlowData, fieldTypesMap]
   );
 
+  // -------------------------
+  // Load Flow from API
+  // -------------------------
   useEffect(() => {
     const fetchFlow = async () => {
       setLoading(true);
       try {
-        if (!flow_uid) {
-          setFlowData(null);
-          setNodes([]);
-          setEdges([]);
-          setFlowName("");
-          return;
-        }
+        if (!flow_uid) return;
 
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
         const res = await fetch(`${apiUrl}/api/flows/${flow_uid}`);
         if (!res.ok) throw new Error("Flow not found");
 
         const data = await res.json();
-        console.log(data);
-
         const flowGraph = data.data.flow_graph;
         if (!flowGraph) throw new Error("Flow graph not found");
 
         setFlowData(flowGraph);
         setNodes(
-          flowGraph.nodes.map((n: any) => {
-            console.log("node : ", n.config);
-            return {
-              ...n,
-              data: {
-                ...n.data,
-                config: n.config || {}, // move config inside data
-              },
-            };
-          })
+          flowGraph.nodes.map((n: any) => ({
+            ...n,
+            data: { ...n.data, config: n.config || {} },
+          }))
         );
-
         setEdges(flowGraph.edges || []);
         setFlowName(data.data.flow_name || "");
 
@@ -148,25 +170,22 @@ function BuilderCanvas() {
         setLoading(false);
       }
     };
-
     fetchFlow();
   }, [flow_uid]);
 
   // -------------------------
-  // Callbacks
+  // Node / Edge Callbacks
   // -------------------------
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>
       setNodes((nds) => applyNodeChanges(changes, nds)),
     []
   );
-
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) =>
       setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
-
   const onConnect = useCallback(
     (connection: Connection) =>
       setEdges((eds) => addEdge({ ...connection, animated: true }, eds)),
@@ -185,19 +204,12 @@ function BuilderCanvas() {
         y: event.clientY - bounds.top,
       });
 
-      const data: any =
-        type === "filter" || type === "sort" || type === "group"
-          ? { fields, fieldTypes }
-          : { fields };
+      const data: any = ["filter", "sort", "group"].includes(type)
+        ? { fields, fieldTypes: defaultFieldTypes }
+        : { fields };
 
-      const node: Node = {
-        id: `${type}-${Date.now()}`,
-        type,
-        position,
-        data,
-      };
-
-      setNodes((nds) => nds.concat(node));
+      const node: Node = { id: `${type}-${Date.now()}`, type, position, data };
+      setNodes((nds) => [...nds, node]);
     },
     [reactFlowInstance]
   );
@@ -207,6 +219,9 @@ function BuilderCanvas() {
     event.dataTransfer.dropEffect = "move";
   }, []);
 
+  // -------------------------
+  // Save Flow
+  // -------------------------
   const openSaveModal = () => setIsSaveModalOpen(true);
   const closeSaveModal = () => setIsSaveModalOpen(false);
 
@@ -234,12 +249,8 @@ function BuilderCanvas() {
 
       if (!res.ok) throw new Error(`Error: ${res.statusText}`);
       const data = await res.json();
-      console.log("Flow saved to server:", data);
-
-      // If new flow was created, update URL with new flow_uid
-      if (!flow_uid && data.flow_uid) {
+      if (!flow_uid && data.flow_uid)
         navigate(`/builder/${data.flow_uid}`, { replace: true });
-      }
     } catch (err) {
       console.error("Failed to save flow to API:", err);
     }
@@ -252,13 +263,17 @@ function BuilderCanvas() {
     localStorage.removeItem("dynamatics-flow");
     setNodes([]);
     setEdges([]);
+    setExecutedFlowData([]);
+    setFieldTypesMap({});
   }, []);
 
-  const onRun = useCallback(async () => {
+  // -------------------------
+  // Run full flow
+  // -------------------------
+  const onRunFullFlow = useCallback(async () => {
     if (!reactFlowInstance) return;
 
     const flow = reactFlowInstance.toObject();
-
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
       const res = await fetch(`${apiUrl}/api/flows/execute`, {
@@ -269,22 +284,14 @@ function BuilderCanvas() {
           flow_graph: flow,
         }),
       });
-
       if (!res.ok) throw new Error(`Execution failed: ${res.statusText}`);
       const result = await res.json();
-      console.log("Flow executed:", result);
-
-      if (result.status === "success") {
-        setExecutedFlowData(result.data); // 🔹 save executed results
-      }
+      if (result.status === "success") setExecutedFlowData(result.data);
     } catch (err) {
       console.error("Failed to run flow:", err);
     }
   }, [reactFlowInstance, flowName]);
 
-  // -------------------------
-  // Render
-  // -------------------------
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -313,7 +320,6 @@ function BuilderCanvas() {
         />
         <Controls className="dark:bg-gray-800 dark:text-gray-100" />
 
-        {/* 🔙 Back */}
         <Panel position="top-left">
           <Button
             variant="ghost"
@@ -321,19 +327,17 @@ function BuilderCanvas() {
             className="flex items-center gap-1"
             onClick={() => navigate("/dashboard")}
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back
+            <ArrowLeft className="h-4 w-4" /> Back
           </Button>
         </Panel>
 
         <Panel position="top-right" className="space-x-2">
           <Button onClick={openSaveModal}>Save</Button>
-          <Button onClick={onRun}>Run</Button>
+          <Button onClick={onRunFullFlow}>Run</Button>
           <Button onClick={onClear}>Clear</Button>
         </Panel>
       </ReactFlow>
 
-      {/* 🔹 Save Modal */}
       <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

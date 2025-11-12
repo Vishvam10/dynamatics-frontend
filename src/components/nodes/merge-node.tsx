@@ -2,22 +2,22 @@ import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
 
-const MERGE_TYPES = ["concat", "union", "intersection"];
+const MERGE_TYPES = ["inner", "outer", "left", "right"];
 
-export const MergeNode = ({ id, data, config }: any) => {
-  const { fields = [] } = data;
+export const MergeNode = ({ id, data }: any) => {
   const { setNodes } = useReactFlow();
+  const { fields = [], config = {} } = data; // get fields from node data
 
-  const [mergeType, setMergeType] = useState(config?.mergeType || "concat");
-  const [keyField, setKeyField] = useState(config?.keyField || "");
+  const [mergeType, setMergeType] = useState(config?.mergeType || "inner");
+  const [mergeField, setMergeField] = useState(config?.mergeField || "");
 
   useEffect(() => {
     setNodes((nds) =>
       nds.map((n) =>
-        n.id === id ? { ...n, config: { mergeType, keyField } } : n
+        n.id === id ? { ...n, config: { how: mergeType, "on": mergeField } } : n
       )
     );
-  }, [id, mergeType, keyField, setNodes]);
+  }, [id, mergeType, mergeField, setNodes]);
 
   return (
     <BaseNode title="Merge" typeLabel="Transform" inputs={2} outputs={1}>
@@ -37,15 +37,15 @@ export const MergeNode = ({ id, data, config }: any) => {
         </select>
       </div>
 
-      {/* Key Field */}
+      {/* Merge On Field */}
       <div className="flex flex-col space-y-1 mt-2">
-        <label className="text-[10px] font-medium">Key Field</label>
+        <label className="text-[10px] font-medium">Merge On Field</label>
         <select
           className="w-full border rounded p-1 text-sm"
-          value={keyField}
-          onChange={(e) => setKeyField(e.target.value)}
+          value={mergeField}
+          onChange={(e) => setMergeField(e.target.value)}
         >
-          <option value="">Select key field</option>
+          <option value="">Select Field</option>
           {fields.map((f: string) => (
             <option key={f} value={f}>
               {f}

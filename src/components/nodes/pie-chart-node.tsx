@@ -1,36 +1,69 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { BaseNode } from "./base-node";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from "@/components/ui/chart";
-import { Pie, PieChart } from "recharts";
+import { PieChart, Pie, Cell } from "recharts";
 
-interface PieChartNodeProps {
-  data: {
-    fields: string[];
-  };
-}
-
-const defaultChartData = [
-  { name: "A", value: 40, fill: "#9f7aea" }, // purple-400
-  { name: "D", value: 10, fill: "#553c9a" }, // purple-700
+const COLORS = [
+  "#9f7aea",
+  "#6b46c1",
+  "#d6bcfa",
+  "#805ad5",
+  "#b794f4",
+  "#faf089",
 ];
 
-const chartConfig: ChartConfig = {
-  A: { label: "A", color: "#9f7aea" },
-  D: { label: "D", color: "#553c9a" },
-};
+interface PieChartNodeProps {
+  nodeId: string;
+  executedData?: any[];
+  fieldTypes?: Record<string, string>;
+  config?: { yField?: string };
+}
 
-export const PieChartNode = ({ data }: PieChartNodeProps) => {
-  const { fields = [] } = data;
+export const PieChartNode = ({
+  nodeId,
+  executedData = [],
+  fieldTypes = {},
+  config = {},
+}: PieChartNodeProps) => {
+  const [yField, setYField] = useState("");
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [numberFields, setNumberFields] = useState<string[]>([]);
 
-  const [xField, setXField] = useState(fields[0] || "");
-  const [yField, setYField] = useState(fields[1] || "");
+  const actualData = useMemo(() => {
+    const nodeResult = executedData.find((d) => d.node_id === nodeId);
+    return nodeResult?.output || [];
+  }, [executedData, nodeId]);
 
-  const hasData = fields && fields.length > 0;
+  // Infer numeric fields
+  useEffect(() => {
+    if (!actualData.length) return;
+    const fields = Object.keys(actualData[0] || {});
+    const numFields = fields.filter((f) => fieldTypes[f] === "number");
+
+    setNumberFields(numFields);
+    setYField(config.yField || numFields[0] || fields[0] || "");
+  }, [actualData, fieldTypes, config]);
+
+  // Map chart data and convert to percentages
+  useEffect(() => {
+    if (!yField) return;
+
+    const values = actualData.map((row: any) => row[yField] ?? 0);
+    const total = values.reduce((acc: any, v: any) => acc + v, 0);
+
+    const mapped = values.map((v: any, i: any) => ({
+      name: (i + 1).toString(), // index as label
+      value: total ? (v / total) * 100 : 0,
+    }));
+
+    setChartData(mapped);
+  }, [actualData, yField]);
+
+  const hasData = chartData.length > 0;
 
   return (
     <BaseNode
@@ -40,59 +73,56 @@ export const PieChartNode = ({ data }: PieChartNodeProps) => {
       outputs={0}
       className="border-t-purple-600"
     >
-      <div className="space-y-2 text-[10px]">
-        <div>
-          <label className="block mb-1 text-gray-600">X-axis</label>
-          <select
-            value={xField}
-            onChange={(e) => setXField(e.target.value)}
-            className="w-full border border-gray-300 rounded p-1 text-xs focus:outline-none focus:ring-1 focus:ring-purple-300"
-          >
-            {fields.map((f) => (
-              <option key={f}>{f}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block mb-1 text-gray-600">Y-axis</label>
-          <select
-            value={yField}
-            onChange={(e) => setYField(e.target.value)}
-            className="w-full border border-gray-300 rounded p-1 text-xs focus:outline-none focus:ring-1 focus:ring-purple-300"
-          >
-            {fields.map((f) => (
-              <option key={f}>{f}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Chart preview */}
-        {hasData ? (
-          <div className="flex justify-center pt-2">
-            <ChartContainer config={chartConfig} className="w-24 h-24">
-              <PieChart width={100} height={100}>
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <Pie
-                  data={defaultChartData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={40}
-                  stroke="#f3e8ff"
-                  strokeWidth={1}
-                />
-              </PieChart>
-            </ChartContainer>
-          </div>
-        ) : (
-          <div className="text-center text-gray-400 text-xs pt-4">
-            No data to visualize
-          </div>
-        )}
+      {/* Y-axis selector */}
+      <div>
+        <label className="block mb-1 text-gray-600">Values</label>
+        <select
+          value={yField}
+          onChange={(e) => setYField(e.target.value)}
+          className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
+        >
+          {numberFields.map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {/* Pie Chart */}
+      {hasData ? (
+        <div className="flex justify-center pt-2 w-80 h-48">
+          <ChartContainer
+            config={{ value: { label: "Value (%)", color: "#9f7aea" } }}
+            className="w-full h-full"
+          >
+            <PieChart width={300} height={150}>
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={50}
+                fill="#9f7aea"
+                label={(entry) => `${entry.value.toFixed(1)}%`}
+              >
+                {chartData.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+            </PieChart>
+          </ChartContainer>
+        </div>
+      ) : (
+        <div className="text-center text-gray-400 text-xs pt-4">
+          No data to visualize
+        </div>
+      )}
     </BaseNode>
   );
 };
