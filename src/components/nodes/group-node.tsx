@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
+import { useFieldTypes } from "@/contexts/FieldTypesContext";
 
 const AGGREGATES = [
   "count",
@@ -16,7 +17,9 @@ const AGGREGATES = [
   "median",
 ];
 
-export const GroupNode = ({ id, data, fields = [], fieldTypes = {}, config = {} }: any) => {
+export const GroupNode = ({ id, data }: any) => {
+  const { config = {} } = data;
+  const { fields } = useFieldTypes();
   const { setNodes } = useReactFlow();
 
   // Initialize from config or empty arrays

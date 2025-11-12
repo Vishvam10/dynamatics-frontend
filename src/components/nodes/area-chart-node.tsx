@@ -6,20 +6,20 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { AreaChart, XAxis, YAxis, CartesianGrid, Area } from "recharts";
+import { useFieldTypes } from "@/contexts/FieldTypesContext";
 
 interface AreaChartNodeProps {
   nodeId: string;
   executedData?: any[];
-  fieldTypes?: Record<string, string>;
   config?: { xField?: string; yField?: string };
 }
 
 export const AreaChartNode = ({
   nodeId,
   executedData = [],
-  fieldTypes = {},
   config = {},
 }: AreaChartNodeProps) => {
+  const { fieldTypes } = useFieldTypes();
   const [xField, setXField] = useState("");
   const [yField, setYField] = useState("");
   const [chartData, setChartData] = useState<any[]>([]);

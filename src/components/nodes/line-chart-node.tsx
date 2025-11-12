@@ -6,20 +6,20 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+import { useFieldTypes } from "@/contexts/FieldTypesContext";
 
 interface LineChartNodeProps {
   nodeId: string;
   executedData?: any[];
-  fieldTypes?: Record<string, string>;
   config?: { xField?: string; yField?: string };
 }
 
 export const LineChartNode = ({
   nodeId,
   executedData = [],
-  fieldTypes = {},
   config = {},
 }: LineChartNodeProps) => {
+  const { fieldTypes } = useFieldTypes();
   const [xField, setXField] = useState(""); // optional categorical
   const [yField, setYField] = useState(""); // numeric values
   const [chartData, setChartData] = useState<any[]>([]);

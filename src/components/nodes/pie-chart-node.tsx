@@ -6,6 +6,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { PieChart, Pie, Cell } from "recharts";
+import { useFieldTypes } from "@/contexts/FieldTypesContext";
 
 const COLORS = [
   "#9f7aea",
@@ -19,16 +20,15 @@ const COLORS = [
 interface PieChartNodeProps {
   nodeId: string;
   executedData?: any[];
-  fieldTypes?: Record<string, string>;
   config?: { yField?: string };
 }
 
 export const PieChartNode = ({
   nodeId,
   executedData = [],
-  fieldTypes = {},
   config = {},
 }: PieChartNodeProps) => {
+  const { fieldTypes } = useFieldTypes();
   const [yField, setYField] = useState("");
   const [chartData, setChartData] = useState<any[]>([]);
   const [numberFields, setNumberFields] = useState<string[]>([]);

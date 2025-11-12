@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
+import { useFieldTypes } from "@/contexts/FieldTypesContext";
 
-export const SortNode = ({ id, data, fields = [], fieldTypes = {}, config = {} }: any) => {
+export const SortNode = ({ id, data }: any) => {
+  const { config = {} } = data;
+  const { fields } = useFieldTypes();
   const { setNodes } = useReactFlow();
 
   const [field, setField] = useState(config?.field || "");

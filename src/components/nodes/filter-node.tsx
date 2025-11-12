@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
+import { useFieldTypes } from "@/contexts/FieldTypesContext";
 
 const FILTERS: Record<string, string[]> = {
   number: ["gt", "gte", "lt", "lte", "eq", "neq"],
@@ -10,7 +11,8 @@ const FILTERS: Record<string, string[]> = {
 };
 
 export const FilterNode = ({ id, data }: any) => {
-  const { fields = [], fieldTypes = {}, config = {} } = data;
+  const { config = {} } = data;
+  const { fields, fieldTypes } = useFieldTypes();
   const { setNodes } = useReactFlow();
 
   const [field, setField] = useState(config?.field || "");

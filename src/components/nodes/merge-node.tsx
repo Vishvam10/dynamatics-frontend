@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
+import { useFieldTypes } from "@/contexts/FieldTypesContext";
 
 const MERGE_TYPES = ["inner", "outer", "left", "right"];
 
-export const MergeNode = ({ id, data, fields = [], fieldTypes = {}, config = {} }: any) => {
+export const MergeNode = ({ id, data }: any) => {
+  const { config = {} } = data;
+  const { fields } = useFieldTypes();
   const { setNodes } = useReactFlow();
 
   const [mergeType, setMergeType] = useState(config?.mergeType || "inner");

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from "react";
 
 // Default fallback values
 const defaultFields = ["id", "name", "age", "country", "salary"];
@@ -27,21 +27,24 @@ export function FieldTypesProvider({ children }: { children: ReactNode }) {
   const [fieldTypes, setFieldTypes] =
     useState<Record<string, string>>(defaultFieldTypes);
 
-  const resetToDefaults = () => {
+  const resetToDefaults = useCallback(() => {
     setFields(defaultFields);
     setFieldTypes(defaultFieldTypes);
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      fields,
+      fieldTypes,
+      setFields,
+      setFieldTypes,
+      resetToDefaults,
+    }),
+    [fields, fieldTypes, resetToDefaults]
+  );
 
   return (
-    <FieldTypesContext.Provider
-      value={{
-        fields,
-        fieldTypes,
-        setFields,
-        setFieldTypes,
-        resetToDefaults,
-      }}
-    >
+    <FieldTypesContext.Provider value={value}>
       {children}
     </FieldTypesContext.Provider>
   );

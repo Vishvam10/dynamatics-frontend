@@ -6,20 +6,20 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { useFieldTypes } from "@/contexts/FieldTypesContext";
 
 interface BarChartNodeProps {
   nodeId: string;
   executedData?: any[];
-  fieldTypes?: Record<string, string>;
   config?: { xField?: string; yField?: string };
 }
 
 export const BarChartNode = ({
   nodeId,
   executedData = [],
-  fieldTypes = {},
   config = {},
 }: BarChartNodeProps) => {
+  const { fieldTypes } = useFieldTypes();
   const [xField, setXField] = useState("");
   const [yField, setYField] = useState("");
   const [chartData, setChartData] = useState<any[]>([]);
