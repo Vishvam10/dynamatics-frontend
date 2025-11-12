@@ -1,7 +1,7 @@
 export const nodeColors: Record<string, string> = {
-  Data: "#E9D5FF", // light purple (50-200)
-  Transform: "#C084FC", // mid purple (400)
-  Aggregate: "#A855F7", // purple-500
-  Connector: "#7E22CE", // deep purple (700)
-  Default: "#A78BFA", // fallback purple
+  Data: "#E7D9F8",       // --color-purple-300 ~ oklch(82.7% .119 306.383)
+  Transform: "#B57CF5",  // --color-purple-400 ~ oklch(71.4% .203 305.504)
+  Aggregate: "#A855F7",  // --color-violet-500 ~ oklch(60.6% .25 292.717)
+  Connector: "#5F22C6",  // --color-violet-800 ~ oklch(43.2% .232 292.759)
+  Default: "#9F7BFA",    // fallback purple
 };

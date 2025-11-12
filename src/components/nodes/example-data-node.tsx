@@ -6,7 +6,7 @@ export const ExampleDataNode = () => {
 
   return (
     <BaseNode
-      title="Example Data"
+      title="Dataset"
       typeLabel="Data Source"
       className="border-t-purple-100"
       inputs={0}

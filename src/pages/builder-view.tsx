@@ -8,6 +8,7 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
+  Panel,
   type Node,
   type Edge,
   type NodeChange,
@@ -26,7 +27,12 @@ import {
 } from "./../components/nodes";
 import { BuilderSidebar } from "@/components/builder-sidebar";
 import { ExportDataNode } from "@/components/nodes/export-node";
-import { VisualizeNode } from "@/components/nodes/visualize-node";
+import { PieChartNode } from "@/components/nodes/pie-chart-node";
+import { BarChartNode } from "@/components/nodes/bar-chart-node";
+import { LineChartNode } from "@/components/nodes/line-chart-node";
+import { AreaChartNode } from "@/components/nodes/area-chart-node";
+
+const flowKey = "dynamatics-flow";
 
 const nodeTypes = {
   filter: FilterNode,
@@ -35,7 +41,10 @@ const nodeTypes = {
   exampleData: ExampleDataNode,
   dataSource: DataSourceNode,
   export: ExportDataNode,
-  visualize: VisualizeNode,
+  pieChart: PieChartNode,
+  barChart: BarChartNode,
+  lineChart: LineChartNode,
+  areaChart: AreaChartNode,
 };
 
 const fields = ["id", "name", "age", "country"];
@@ -49,7 +58,7 @@ const fieldTypes = {
 function BuilderCanvas() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const reactFlowInstance = useReactFlow(); // 👈 use the instance
+  const reactFlowInstance = useReactFlow();
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>
@@ -93,13 +102,6 @@ function BuilderCanvas() {
         case "export":
           data = { type: "data" };
           break;
-        case "visualize":
-          data = { type: "vis" };
-          break;
-        case "dataSource":
-        case "exampleData":
-          data = { fields };
-          break;
         default:
           data = { fields };
       }
@@ -135,6 +137,28 @@ function BuilderCanvas() {
     >
       <Background />
       <Controls />
+
+      {/* Panel for Save/Restore */}
+      <Panel position="top-right" className="space-x-2">
+        <button
+          className="px-3 py-1 text-xs rounded bg-violet-500 text-white hover:bg-violet-600"
+          onClick={onSave}
+        >
+          Save
+        </button>
+        <button
+          className="px-3 py-1 text-xs rounded bg-violet-400 text-white hover:bg-violet-500"
+          onClick={onRestore}
+        >
+          Restore
+        </button>
+        <button
+          className="px-3 py-1 text-xs rounded bg-violet-300 text-gray-800 hover:bg-violet-400"
+          onClick={onClear}
+        >
+          Clear
+        </button>
+      </Panel>
     </ReactFlow>
   );
 }

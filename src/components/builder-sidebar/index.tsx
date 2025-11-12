@@ -2,6 +2,21 @@ import { useState, useMemo } from "react";
 import { nodeColors } from "@/utils/node-colours";
 
 const sidebarNodes = [
+  // --- Data & Transform ---
+  {
+    type: "dataSource",
+    label: "Data Source",
+    category: "Connector",
+    input: "None",
+    output: "Dataset",
+  },
+  {
+    type: "exampleData",
+    label: "Example Data",
+    category: "Data",
+    input: "None",
+    output: "Dataset",
+  },
   {
     type: "filter",
     label: "Filter Node",
@@ -23,20 +38,8 @@ const sidebarNodes = [
     input: "Dataset",
     output: "Dataset",
   },
-  {
-    type: "dataSource",
-    label: "Data Source",
-    category: "Connector",
-    input: "None",
-    output: "Dataset",
-  },
-  {
-    type: "exampleData",
-    label: "Example Data",
-    category: "Data",
-    input: "None",
-    output: "Dataset",
-  },
+
+  // --- Export ---
   {
     type: "export",
     label: "Export Data",
@@ -44,16 +47,47 @@ const sidebarNodes = [
     input: "Dataset",
     output: "None",
   },
+
+  // --- Visualization ---
   {
-    type: "visualize",
-    label: "Visualize",
+    type: "pieChart",
+    label: "Pie Chart",
+    category: "Visualize",
+    input: "Dataset",
+    output: "None",
+  },
+  {
+    type: "barChart",
+    label: "Bar Chart",
+    category: "Visualize",
+    input: "Dataset",
+    output: "None",
+  },
+  {
+    type: "lineChart",
+    label: "Line Chart",
+    category: "Visualize",
+    input: "Dataset",
+    output: "None",
+  },
+  {
+    type: "areaChart",
+    label: "Area Chart",
     category: "Visualize",
     input: "Dataset",
     output: "None",
   },
 ];
 
-const categories = ["All", "Data", "Transform", "Aggregate", "Connector"];
+const categories = [
+  "All",
+  "Data",
+  "Transform",
+  "Aggregate",
+  "Connector",
+  "Visualize",
+  "Export",
+];
 
 export function BuilderSidebar() {
   const [search, setSearch] = useState("");
@@ -78,7 +112,7 @@ export function BuilderSidebar() {
 
   return (
     <aside className="w-64 border-r bg-gray-50 flex flex-col h-full">
-      {/* Header / Search / Filter */}
+      {/* Header */}
       <div className="p-3 border-b flex flex-col gap-2">
         <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
           Nodes
@@ -130,9 +164,6 @@ export function BuilderSidebar() {
                         style={{ backgroundColor: color }}
                       />
                       <div className="flex flex-col leading-tight">
-                        {/* <span className="text-[10px] text-gray-400 uppercase">
-                          {category}
-                        </span> */}
                         <span className="text-[12px] font-medium text-gray-800">
                           {label}
                         </span>
