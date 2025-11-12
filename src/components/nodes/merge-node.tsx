@@ -4,9 +4,8 @@ import { useReactFlow } from "@xyflow/react";
 
 const MERGE_TYPES = ["inner", "outer", "left", "right"];
 
-export const MergeNode = ({ id, data }: any) => {
+export const MergeNode = ({ id, data, fields = [], fieldTypes = {}, config = {} }: any) => {
   const { setNodes } = useReactFlow();
-  const { fields = [], config = {} } = data; // get fields from node data
 
   const [mergeType, setMergeType] = useState(config?.mergeType || "inner");
   const [mergeField, setMergeField] = useState(config?.mergeField || "");

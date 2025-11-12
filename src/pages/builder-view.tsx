@@ -44,7 +44,8 @@ import { MergeNode } from "@/components/nodes/merge-node";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const fields = ["id", "name", "age", "country", "salary"];
+// Default fallback values
+const defaultFields = ["id", "name", "age", "country", "salary"];
 const defaultFieldTypes = {
   id: "number",
   name: "string",
@@ -74,6 +75,72 @@ function BuilderCanvas() {
   const [loading, setLoading] = useState(true);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [flowName, setFlowName] = useState("");
+  
+  // Dynamic fields and field types from API
+  const [fields, setFields] = useState<string[]>(defaultFields);
+  const [currentFieldTypes, setCurrentFieldTypes] = useState<Record<string, string>>(defaultFieldTypes);
+
+  // -------------------------
+  // Fetch Metadata from API
+  // -------------------------
+  const fetchDatasetMetadata = useCallback(async (dataset: string) => {
+    if (!dataset) {
+      // Reset to defaults if no dataset
+      setFields(defaultFields);
+      setCurrentFieldTypes(defaultFieldTypes);
+      return;
+    }
+
+    console.log(dataset);
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      const res = await fetch(`${apiUrl}/api/flows/metadata/${dataset}`);
+      if (!res.ok) {
+        console.warn(`Failed to fetch metadata for ${dataset}`);
+        setFields(defaultFields);
+        setCurrentFieldTypes(defaultFieldTypes);
+        return;
+      }
+
+      const data = await res.json();
+      
+      // Data is now an object: { "column_name": "column_type", ... }
+      // Extract column names and types from the object
+      const columnNames = Object.keys(data);
+      
+      // Map API column types to frontend field types
+      const typeMap: Record<string, string> = {
+        str: "string",
+        string: "string",
+        number: "number",
+        num: "number",
+        int: "number",
+        float: "number",
+        bool: "boolean",
+        boolean: "boolean",
+        list: "list",
+        array: "list",
+        dict: "dict",
+        date: "date",
+        datetime: "date",
+      };
+
+      const fieldTypesObj: Record<string, string> = {};
+      columnNames.forEach((col: string) => {
+        const apiType = (data[col] || "str").toLowerCase();
+        fieldTypesObj[col] = typeMap[apiType] || "string";
+      });
+      console.log(fieldTypesObj);
+
+      setFields(columnNames);
+      setCurrentFieldTypes(fieldTypesObj);
+    } catch (err) {
+      console.error(`Error fetching metadata for ${dataset}:`, err);
+      setFields(defaultFields);
+      setCurrentFieldTypes(defaultFieldTypes);
+    }
+  }, []);
 
   // -------------------------
   // Node Types
@@ -84,7 +151,12 @@ function BuilderCanvas() {
       sort: SortNode,
       group: GroupNode,
       merge: MergeNode,
-      exampleData: ExampleDataNode,
+      exampleData: (props: any) => (
+        <ExampleDataNode
+          {...props}
+          fetchFieldTypes={fetchDatasetMetadata}
+        />
+      ),
       dataSource: DataSourceNode,
       export: (props: any) => (
         <ExportDataNode {...props} executedData={executedFlowData} />
@@ -94,7 +166,7 @@ function BuilderCanvas() {
           {...props}
           executedData={executedFlowData}
           nodeId={props.id}
-          fieldTypes={fieldTypesMap[props.id] || defaultFieldTypes}
+          fieldTypes={currentFieldTypes}
           config={props.data?.config || {}}
         />
       ),
@@ -103,7 +175,7 @@ function BuilderCanvas() {
           {...props}
           executedData={executedFlowData}
           nodeId={props.id}
-          fieldTypes={fieldTypesMap[props.id] || defaultFieldTypes}
+          fieldTypes={currentFieldTypes}
           config={props.data?.config || {}}
         />
       ),
@@ -112,7 +184,7 @@ function BuilderCanvas() {
           {...props}
           executedData={executedFlowData}
           nodeId={props.id}
-          fieldTypes={fieldTypesMap[props.id] || defaultFieldTypes}
+          fieldTypes={currentFieldTypes}
           config={props.data?.config || {}}
         />
       ),
@@ -121,12 +193,12 @@ function BuilderCanvas() {
           {...props}
           executedData={executedFlowData}
           nodeId={props.id}
-          fieldTypes={fieldTypesMap[props.id] || defaultFieldTypes}
+          fieldTypes={currentFieldTypes}
           config={props.data?.config || {}}
         />
       ),
     }),
-    [executedFlowData, fieldTypesMap]
+    [executedFlowData, currentFieldTypes, fetchDatasetMetadata]
   );
 
   // -------------------------
@@ -147,14 +219,21 @@ function BuilderCanvas() {
         if (!flowGraph) throw new Error("Flow graph not found");
 
         setFlowData(flowGraph);
-        setNodes(
-          flowGraph.nodes.map((n: any) => ({
-            ...n,
-            data: { ...n.data, config: n.config || {} },
-          }))
-        );
+        const mappedNodes = flowGraph.nodes.map((n: any) => ({
+          ...n,
+          data: { ...n.data, config: n.config || {} },
+        }));
+        setNodes(mappedNodes);
         setEdges(flowGraph.edges || []);
         setFlowName(data.data.flow_name || "");
+
+        // Fetch metadata for any exampleData nodes with a dataset selected
+        const exampleDataNode = mappedNodes.find(
+          (n: any) => n.type === "exampleData" && n.data?.config?.input
+        );
+        if (exampleDataNode?.data?.config?.input) {
+          fetchDatasetMetadata(exampleDataNode.data.config.input);
+        }
 
         if (reactFlowInstance && flowGraph.viewport) {
           const { x = 0, y = 0, zoom = 1 } = flowGraph.viewport;
@@ -171,7 +250,7 @@ function BuilderCanvas() {
       }
     };
     fetchFlow();
-  }, [flow_uid]);
+  }, [flow_uid, fetchDatasetMetadata]);
 
   // -------------------------
   // Node / Edge Callbacks
@@ -205,13 +284,13 @@ function BuilderCanvas() {
       });
 
       const data: any = ["filter", "sort", "group"].includes(type)
-        ? { fields, fieldTypes: defaultFieldTypes }
+        ? { fields, fieldTypes: currentFieldTypes }
         : { fields };
 
       const node: Node = { id: `${type}-${Date.now()}`, type, position, data };
       setNodes((nds) => [...nds, node]);
     },
-    [reactFlowInstance]
+    [reactFlowInstance, fields, currentFieldTypes]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {

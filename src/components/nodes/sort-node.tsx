@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
 
-export const SortNode = ({ id, data }: any) => {
-  const { fields = [], config = {} } = data;
+export const SortNode = ({ id, data, fields = [], fieldTypes = {}, config = {} }: any) => {
   const { setNodes } = useReactFlow();
 
   const [field, setField] = useState(config?.field || "");

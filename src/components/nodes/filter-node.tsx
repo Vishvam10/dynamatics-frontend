@@ -17,6 +17,7 @@ export const FilterNode = ({ id, data }: any) => {
   const [condition, setCondition] = useState(config?.condition || "");
   const [value, setValue] = useState(config?.value ?? "");
 
+
   const type = fieldTypes?.[field] ?? "string";
 
   const conditions = useMemo(() => FILTERS[type] || FILTERS.default, [type]);

@@ -8,8 +8,6 @@ export const ExampleDataNode = ({ id, config, fetchFieldTypes }: any) => {
 
   // Update node config whenever dataset changes
   useEffect(() => {
-    if (!dataset) return; // don't update if no selection
-
     setNodes((nds) =>
       nds.map((n) =>
         n.id === id
@@ -24,9 +22,8 @@ export const ExampleDataNode = ({ id, config, fetchFieldTypes }: any) => {
       )
     );
 
-    // Call fetchFieldTypes only if a dataset is selected
-    fetchFieldTypes?.(id);
-  }, [dataset, id, setNodes, fetchFieldTypes]);
+    fetchFieldTypes(dataset);
+  }, [dataset]);
 
   return (
     <BaseNode

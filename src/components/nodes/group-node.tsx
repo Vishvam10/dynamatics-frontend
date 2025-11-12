@@ -16,8 +16,7 @@ const AGGREGATES = [
   "median",
 ];
 
-export const GroupNode = ({ id, data }: any) => {
-  const { fields = [], config = {} } = data;
+export const GroupNode = ({ id, data, fields = [], fieldTypes = {}, config = {} }: any) => {
   const { setNodes } = useReactFlow();
 
   // Initialize from config or empty arrays
