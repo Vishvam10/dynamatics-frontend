@@ -24,12 +24,12 @@ export function BaseNode({
   return (
     <div
       className={cn(
-        "relative rounded-md text-xs bg-white shadow-sm min-w-[150px] max-w-[200px]",
+        "relative text-xs rounded-lg bg-white shadow-sm flex flex-col w-44 border border-gray-200",
+        "h-auto", // 🔹 allow it to grow freely
         className
       )}
       style={{
         borderTop: `4px solid ${color}`,
-        // overflow: "visible", // 🟢 allow handles to stick out
       }}
     >
       {/* Input Handles */}
@@ -73,18 +73,18 @@ export function BaseNode({
       ))}
 
       {/* Header */}
-      <div className="border-b px-2 py-1 bg-white flex flex-col justify-center">
-        <span className="text-[8px] text-gray-400 uppercase tracking-wide">
+      <div className="border-b px-2 py-1 bg-white shrink-0">
+        <span className="text-[8px] text-gray-400 uppercase tracking-wide block">
           {typeLabel}
         </span>
-        <span className="text-[12px] font-semibold text-gray-800 truncate">
+        <span className="text-[12px] font-semibold text-gray-800 truncate block">
           {title}
         </span>
       </div>
 
-      {/* Content */}
+      {/* Dynamic Content */}
       {children && (
-        <div className="p-2 space-y-2 text-[10px] text-gray-700">
+        <div className="p-2 space-y-1.5 text-[10px] text-gray-700">
           {children}
         </div>
       )}

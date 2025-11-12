@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { nodeColors } from "@/utils/node-colours";
 
 const sidebarNodes = [
-  // --- Data & Transform ---
+  // --- Data ---
   {
     type: "dataSource",
     label: "Data Source",
@@ -17,23 +17,32 @@ const sidebarNodes = [
     input: "None",
     output: "Dataset",
   },
+  // --- Transform ---
   {
     type: "filter",
-    label: "Filter Node",
+    label: "Filter",
     category: "Transform",
     input: "Dataset",
     output: "Dataset",
   },
   {
     type: "sort",
-    label: "Sort Node",
+    label: "Sort",
     category: "Transform",
     input: "Dataset",
     output: "Dataset",
   },
+  // --- Aggregation ---
   {
     type: "group",
-    label: "Group Node",
+    label: "Group",
+    category: "Aggregate",
+    input: "Dataset",
+    output: "Dataset",
+  },
+  {
+    type: "merge",
+    label: "Merge",
     category: "Aggregate",
     input: "Dataset",
     output: "Dataset",
@@ -113,9 +122,9 @@ export function BuilderSidebar() {
   return (
     <aside className="w-64 border-r bg-gray-50 flex flex-col h-full">
       {/* Header */}
-      <div className="p-3 border-b flex flex-col gap-2">
-        <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
-          Nodes
+      <div className="p-4 border-b flex flex-col gap-2">
+        <h3 className="font-black text-gray-700 text-sm uppercase tracking-wide mb-2">
+          Flow Builder
         </h3>
 
         <input
@@ -160,7 +169,7 @@ export function BuilderSidebar() {
                     {/* Header */}
                     <div className="border-b px-2 py-1.5 flex items-center gap-2">
                       <span
-                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        className="w-3 h-3 rounded-full shrink-0"
                         style={{ backgroundColor: color }}
                       />
                       <div className="flex flex-col leading-tight">

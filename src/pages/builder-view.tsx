@@ -18,6 +18,10 @@ import {
 
 import "@xyflow/react/dist/style.css";
 
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 import {
   FilterNode,
   GroupNode,
@@ -31,13 +35,13 @@ import { PieChartNode } from "@/components/nodes/pie-chart-node";
 import { BarChartNode } from "@/components/nodes/bar-chart-node";
 import { LineChartNode } from "@/components/nodes/line-chart-node";
 import { AreaChartNode } from "@/components/nodes/area-chart-node";
-
-const flowKey = "dynamatics-flow";
+import { MergeNode } from "@/components/nodes/merge-node";
 
 const nodeTypes = {
   filter: FilterNode,
   sort: SortNode,
   group: GroupNode,
+  merge: MergeNode,
   exampleData: ExampleDataNode,
   dataSource: DataSourceNode,
   export: ExportDataNode,
@@ -59,6 +63,7 @@ function BuilderCanvas() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const reactFlowInstance = useReactFlow();
+  const navigate = useNavigate();
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>
@@ -85,14 +90,12 @@ function BuilderCanvas() {
       if (!type) return;
 
       const bounds = event.currentTarget.getBoundingClientRect();
-
       const position = reactFlowInstance?.screenToFlowPosition({
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       });
 
       let data: any = { fields };
-
       switch (type) {
         case "filter":
         case "sort":
@@ -126,13 +129,13 @@ function BuilderCanvas() {
   const onSave = useCallback(() => {
     if (reactFlowInstance) {
       const flow = reactFlowInstance.toObject();
-      localStorage.setItem(flowKey, JSON.stringify(flow));
-      console.log("Flow saved");
+      localStorage.setItem("dynamatics-flow", JSON.stringify(flow));
+      console.log("Flow saved:", flow);
     }
   }, [reactFlowInstance]);
 
   const onRestore = useCallback(() => {
-    const savedFlow = localStorage.getItem(flowKey);
+    const savedFlow = localStorage.getItem("dynamatics-flow");
     if (!savedFlow) return;
 
     const flow = JSON.parse(savedFlow);
@@ -144,54 +147,84 @@ function BuilderCanvas() {
   }, [reactFlowInstance]);
 
   const onClear = useCallback(() => {
-    localStorage.removeItem(flowKey);
+    localStorage.removeItem("dynamatics-flow");
     setNodes([]);
     setEdges([]);
   }, []);
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      onDrop={onDrop}
-      onDragOver={onDragOver}
-      fitView
-    >
-      <Background />
-      <Controls />
+    <div className="relative h-full w-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        fitView
+        // Only allow one connection per input handle
+        isValidConnection={(connection) => {
+          return !edges.some(
+            (e) =>
+              e.target === connection.target &&
+              e.targetHandle === connection.targetHandle
+          );
+        }}
+      >
+        <Background
+          color="rgba(148, 0, 211, 0.15)"
+          className="transition-colors duration-300 dark:bg-gray-900"
+        />
+        <Controls className="dark:bg-gray-800 dark:text-gray-100" />
 
-      {/* Panel for Save/Restore */}
-      <Panel position="top-right" className="space-x-2">
-        <button
-          className="px-3 py-1 text-xs rounded bg-violet-500 text-white hover:bg-violet-600"
-          onClick={onSave}
-        >
-          Save
-        </button>
-        <button
-          className="px-3 py-1 text-xs rounded bg-violet-400 text-white hover:bg-violet-500"
-          onClick={onRestore}
-        >
-          Restore
-        </button>
-        <button
-          className="px-3 py-1 text-xs rounded bg-violet-300 text-gray-800 hover:bg-violet-400"
-          onClick={onClear}
-        >
-          Clear
-        </button>
-      </Panel>
-    </ReactFlow>
+        {/* 🔙 Back Button */}
+        <Panel position="top-left">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1 text-gray-700 dark:text-gray-200 hover:text-violet-600 dark:hover:text-violet-400"
+            onClick={() => navigate("/dashboard")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </Panel>
+
+        {/* 💾 Save / Restore / Clear */}
+        <Panel position="top-right" className="space-x-2">
+          <Button
+            size="sm"
+            className="bg-violet-500 text-white hover:bg-violet-600 dark:bg-violet-600 dark:hover:bg-violet-700"
+            onClick={onSave}
+          >
+            Save
+          </Button>
+          <Button
+            size="sm"
+            className="bg-violet-400 text-white hover:bg-violet-500 dark:bg-violet-500 dark:hover:bg-violet-600"
+            onClick={onRestore}
+          >
+            Restore
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+            onClick={onClear}
+          >
+            Clear
+          </Button>
+        </Panel>
+      </ReactFlow>
+    </div>
   );
 }
 
 export default function BuilderView() {
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <BuilderSidebar />
       <div className="flex-1">
         <ReactFlowProvider>
