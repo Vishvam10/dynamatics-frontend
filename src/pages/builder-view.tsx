@@ -123,6 +123,32 @@ function BuilderCanvas() {
     event.dataTransfer.dropEffect = "move";
   }, []);
 
+  const onSave = useCallback(() => {
+    if (reactFlowInstance) {
+      const flow = reactFlowInstance.toObject();
+      localStorage.setItem(flowKey, JSON.stringify(flow));
+      console.log("Flow saved");
+    }
+  }, [reactFlowInstance]);
+
+  const onRestore = useCallback(() => {
+    const savedFlow = localStorage.getItem(flowKey);
+    if (!savedFlow) return;
+
+    const flow = JSON.parse(savedFlow);
+    const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+
+    setNodes(flow.nodes || []);
+    setEdges(flow.edges || []);
+    reactFlowInstance.setViewport({ x, y, zoom });
+  }, [reactFlowInstance]);
+
+  const onClear = useCallback(() => {
+    localStorage.removeItem(flowKey);
+    setNodes([]);
+    setEdges([]);
+  }, []);
+
   return (
     <ReactFlow
       nodes={nodes}
