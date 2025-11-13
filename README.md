@@ -41,7 +41,7 @@ can be written as connectors to external services in future
 
 ## **Installation**
 
-1. **Clone the repository**
+1. Clone the repository
 
 ```bash
 git clone https://github.com/your-org/flowgraph-analytics.git
