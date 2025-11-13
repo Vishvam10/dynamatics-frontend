@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
-import { useReactFlow } from "@xyflow/react";
-import { useFieldTypes } from "@/contexts/FieldTypesContext";
-import { Plus, Trash2 } from "lucide-react";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
+import { useBuilder } from "@/contexts/builder-context";
+import type { BaseNodeData } from "@/types/node-data";
 
 const FILTERS: Record<string, string[]> = {
   number: ["gt", "gte", "lt", "lte", "eq", "neq"],
@@ -11,142 +11,86 @@ const FILTERS: Record<string, string[]> = {
   default: ["eq", "neq"],
 };
 
-const LOGIC_OPS = ["AND", "OR"];
+interface Rule {
+  field: string;
+  condition: string;
+  value: string | number;
+}
 
-export const FilterNode = ({ id, data }: any) => {
-  const { config = {} } = data;
-  const { fields, fieldTypes } = useFieldTypes();
+export const FilterNode = (props: NodeProps<BaseNodeData>) => {
+  const builderCtx = useBuilder();
+  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
+
+  const { id, data } = props;
   const { setNodes } = useReactFlow();
 
-  // initialize rules from config
-  const [rules, setRules] = useState<
-    {
-      field: string;
-      condition: string;
-      value: string | number;
-      operator: string;
-    }[]
-  >(
-    config?.rules?.length
-      ? config.rules
-      : [{ field: "", condition: "", value: "", operator: "AND" }]
+  // Single rule state
+  const [rule, setRule] = useState<Rule>(
+    data.config?.rules?.[0] ?? { field: "", condition: "", value: "" }
   );
 
-  const addRule = () =>
-    setRules([
-      ...rules,
-      { field: "", condition: "", value: "", operator: "AND" },
-    ]);
-
-  const removeRule = (idx: number) => {
-    const copy = [...rules];
-    copy.splice(idx, 1);
-    setRules(copy);
+  const updateRule = (key: keyof Rule, value: string | number) => {
+    setRule((prev) => ({ ...prev, [key]: value }));
   };
 
-  const updateRule = (idx: number, key: string, value: any) => {
-    const copy = [...rules];
-    copy[idx] = { ...copy[idx], [key]: value };
-    setRules(copy);
-  };
+  const getType = (field: string) => nodeFieldTypeMap?.[field] ?? "string";
 
-  const getType = (field: string) => fieldTypes?.[field] ?? "string";
-
-  // sync with top-level node
+  // Sync single rule to React Flow node
   useEffect(() => {
-    const parsedRules = rules.map((r) => {
-      const type = getType(r.field);
-      const value =
-        type === "number" && r.value !== "" && !isNaN(Number(r.value))
-          ? Number(r.value)
-          : r.value;
-      return { ...r, value };
-    });
-
     setNodes((nds) =>
-      nds.map((n) =>
-        n.id === id
-          ? { ...n, config: { rules: parsedRules }, data: { ...n.data } }
-          : n
-      )
+      nds.map((n) => {
+        if (n.id !== id) return n;
+        const currentConfig = (n.data?.config as Record<string, any>) || {};
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            config: { ...currentConfig, rules: [rule] },
+          },
+        };
+      })
     );
-  }, [rules, fieldTypes, id, setNodes]);
+  }, [rule, id, setNodes]);
+
+  const type = getType(rule.field);
+  const conditions = FILTERS[type] || FILTERS.default;
 
   return (
     <BaseNode title="Filter" typeLabel="Transform">
-      <div className="flex flex-col gap-2">
-        {rules.map((r, i) => {
-          const type = getType(r.field);
-          const conditions = FILTERS[type] || FILTERS.default;
-
-          return (
-            <div key={i} className="flex items-center gap-1">
-              {i > 0 && (
-                <select
-                  className="border rounded p-1 text-xs"
-                  value={r.operator}
-                  onChange={(e) => updateRule(i, "operator", e.target.value)}
-                >
-                  {LOGIC_OPS.map((op) => (
-                    <option key={op} value={op}>
-                      {op}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              <select
-                className="border rounded p-1 text-xs"
-                value={r.field}
-                onChange={(e) => updateRule(i, "field", e.target.value)}
-              >
-                <option value="">Field</option>
-                {fields.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className="border rounded p-1 text-xs"
-                value={r.condition}
-                onChange={(e) => updateRule(i, "condition", e.target.value)}
-              >
-                <option value="">Condition</option>
-                {conditions.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-
-              <input
-                className="border rounded p-1 text-xs w-16"
-                type={type === "number" ? "number" : "text"}
-                value={r.value}
-                onChange={(e) => updateRule(i, "value", e.target.value)}
-                placeholder="Value"
-              />
-
-              {rules.length > 1 && (
-                <button
-                  onClick={() => removeRule(i)}
-                  className="text-black hover:text-red-500 transition-colors"
-                >
-                  <Trash2 size={12} />
-                </button>
-              )}
-            </div>
-          );
-        })}
-
-        <button
-          onClick={addRule}
-          className="flex items-center gap-1 text-purple-600 hover:text-purple-800 text-xs mt-1"
+      <div className="flex items-center gap-1">
+        <select
+          className="border rounded p-1 text-xs"
+          value={rule.field}
+          onChange={(e) => updateRule("field", e.target.value)}
         >
-          <Plus size={12} /> Add Rule
-        </button>
+          <option value="">Field</option>
+          {Object.keys(nodeFieldTypeMap || {}).map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="border rounded p-1 text-xs"
+          value={rule.condition}
+          onChange={(e) => updateRule("condition", e.target.value)}
+        >
+          <option value="">Condition</option>
+          {conditions.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+
+        <input
+          className="border rounded p-1 text-xs w-16"
+          type={type === "number" ? "number" : "text"}
+          value={rule.value}
+          onChange={(e) => updateRule("value", e.target.value)}
+          placeholder="Value"
+        />
       </div>
     </BaseNode>
   );
