@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { BaseNode } from "./base-node";
+import { BaseNode } from "../base-node";
 import {
   ChartContainer,
   ChartTooltip,

@@ -3,7 +3,6 @@ import {
   ReactFlow,
   Background,
   Controls,
-  ReactFlowProvider,
   useReactFlow,
   applyNodeChanges,
   applyEdgeChanges,
@@ -28,17 +27,24 @@ import {
 } from "@/components/ui/dialog";
 
 import {
+  // Data Nodes
+  DataSourceNode,
+  ExampleDataNode,
+
+  // Aggregate Nodes
   FilterNode,
   GroupNode,
-  ExampleDataNode,
-  DataSourceNode,
   SortNode,
+
+  // View Nodes
+  ViewDataNode,
+
+  // BarChartNode,
+  // LineChartNode,
+  // AreaChartNode,
+  // PieChartNode
 } from "@/components/nodes";
-import { ViewDataNode } from "@/components/nodes/export-node";
-import { PieChartNode } from "@/components/nodes/pie-chart-node";
-import { BarChartNode } from "@/components/nodes/bar-chart-node";
-import { LineChartNode } from "@/components/nodes/line-chart-node";
-import { AreaChartNode } from "@/components/nodes/area-chart-node";
+
 import { MergeNode } from "@/components/nodes/merge-node";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,9 +84,7 @@ export function BuilderCanvas() {
       merge: MergeNode,
       exampleData: ExampleDataNode,
       dataSource: DataSourceNode,
-      //   export: (props: BaseNodeData) => (
-      //     <ViewDataNode {...props} executedData={executedFlowData} />
-      //   ),
+      export: ViewDataNode,
       //   pieChart: (props: BaseNodeData) => (
       //     <PieChartNode
       //       {...props}

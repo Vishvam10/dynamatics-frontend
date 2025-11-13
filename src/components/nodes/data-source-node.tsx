@@ -1,16 +1,31 @@
 import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
 
-export const DataSourceNode = ({ id, config }: any) => {
+import type { BaseNodeData } from "@/types/node-data";
+
+export const DataSourceNode = (props: NodeProps<BaseNodeData>) => {
   const { setNodes } = useReactFlow();
-  const [mode, setMode] = useState<"url" | "upload">(config?.mode || "url");
-  const [url, setUrl] = useState(config?.url || "");
-  const [file, setFile] = useState<File | null>(config?.file || null);
+  const { id, data } = props;
+  const config = data.config || {};
+
+  const [mode, setMode] = useState<"url" | "upload">(config.mode || "url");
+  const [url, setUrl] = useState(config.url || "");
+  const [file, setFile] = useState<File | null>(config.file || null);
 
   useEffect(() => {
     setNodes((nds) =>
-      nds.map((n) => (n.id === id ? { ...n, config: { mode, url, file } } : n))
+      nds.map((n) =>
+        n.id === id
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                config: { ...(n.data?.config || {}), mode, url, file },
+              },
+            }
+          : n
+      )
     );
   }, [id, mode, url, file, setNodes]);
 
@@ -20,6 +35,7 @@ export const DataSourceNode = ({ id, config }: any) => {
       typeLabel="Data Source"
       className="border-t-purple-100"
       inputs={0}
+      outputs={1}
     >
       <div className="flex gap-2">
         <button

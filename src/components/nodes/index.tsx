@@ -1,7 +1,31 @@
-import { FilterNode } from "./filter-node";
-import { GroupNode } from "./group-node";
-import { SortNode } from "./sort-node";
 import { DataSourceNode } from "./data-source-node";
 import { ExampleDataNode } from "./example-data-node";
 
-export { FilterNode, SortNode, GroupNode, DataSourceNode, ExampleDataNode };
+import { FilterNode } from "./filter-node";
+import { SortNode } from "./sort-node";
+import { GroupNode } from "./group-node";
+import { MergeNode } from "./merge-node";
+
+import { BarChartNode } from "./bar-chart-node";
+import { LineChartNode } from "./line-chart-node";
+import { AreaChartNode } from "./area-chart-node";
+import { PieChartNode } from "./pie-chart-node";
+
+import { ViewDataNode } from "./export-node";
+
+export {
+  DataSourceNode,
+  ExampleDataNode,
+
+  FilterNode,
+  SortNode,
+  GroupNode,
+  MergeNode,
+  
+  BarChartNode,
+  LineChartNode,
+  AreaChartNode,
+  PieChartNode,
+
+  ViewDataNode
+};
