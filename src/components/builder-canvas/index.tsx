@@ -35,6 +35,10 @@ import {
   GroupNode,
   SortNode,
 
+  // Logic Nodes
+  LogicalAndNode,
+  LogicalOrNode,
+
   // View Nodes
   ViewDataNode,
 
@@ -82,6 +86,8 @@ export function BuilderCanvas() {
       sort: SortNode,
       group: GroupNode,
       merge: MergeNode,
+      logicalAnd: LogicalAndNode,
+      logicalOr: LogicalOrNode,
       exampleData: ExampleDataNode,
       export: ViewDataNode,
       pieChart: PieChartNode,

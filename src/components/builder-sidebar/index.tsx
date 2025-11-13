@@ -43,14 +43,14 @@ const sidebarNodes = [
   // --- Logical ---
   {
     type: "logicalAnd",
-    label: "LogicalAndNode",
+    label: "Logic And",
     category: "Logic",
     input: "Dataset",
     output: "Dataset",
   },
   {
     type: "logicalOr",
-    label: "LogicalOrNode",
+    label: "Logic Or",
     category: "Logic",
     input: "Dataset",
     output: "Dataset",

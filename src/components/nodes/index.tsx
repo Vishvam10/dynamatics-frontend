@@ -5,6 +5,9 @@ import { SortNode } from "./sort-node";
 import { GroupNode } from "./group-node";
 import { MergeNode } from "./merge-node";
 
+import { LogicalAndNode } from "./logical-and-node";
+import { LogicalOrNode } from "./logical-or-node";
+
 import { BarChartNode } from "./bar-chart-node";
 import { LineChartNode } from "./line-chart-node";
 import { AreaChartNode } from "./area-chart-node";
@@ -14,16 +17,15 @@ import { ViewDataNode } from "./view-data-node";
 
 export {
   ExampleDataNode,
-
   FilterNode,
   SortNode,
   GroupNode,
   MergeNode,
-  
+  LogicalAndNode,
+  LogicalOrNode,
   BarChartNode,
   LineChartNode,
   AreaChartNode,
   PieChartNode,
-
-  ViewDataNode
+  ViewDataNode,
 };

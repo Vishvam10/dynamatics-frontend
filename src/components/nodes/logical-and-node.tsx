@@ -9,6 +9,6 @@ export const LogicalAndNode = (props: NodeProps<BaseNodeData>) => {
       typeLabel="Boolean"
       inputs={4}
       outputs={1}
-    ></BaseNode>
+    >This gate performs an <br></br> AND operation on <br></br>previous filters</BaseNode>
   );
 };
