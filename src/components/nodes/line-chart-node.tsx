@@ -6,78 +6,58 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
-import { useFieldTypes } from "@/contexts/FieldTypesContext";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
+import { useBuilder } from "@/contexts/builder-context";
+import type { BaseNodeData } from "@/types/node-data";
 
-interface LineChartNodeProps {
-  nodeId: string;
-  executedData?: any[];
-  config?: { xField?: string; yField?: string };
-}
-
-export const LineChartNode = ({
-  nodeId,
-  executedData = [],
-  config = {},
-}: LineChartNodeProps) => {
-  const { fields, fieldTypes } = useFieldTypes();
+export const LineChartNode = ({ id, data }: NodeProps<BaseNodeData>) => {
+  const builderCtx = useBuilder();
+  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
   const { setNodes } = useReactFlow();
-  const [xField, setXField] = useState(config.xField || ""); // optional categorical
-  const [yField, setYField] = useState(config.yField || ""); // numeric values
+
+  const config = data.config || {};
+  const fields = Object.keys(nodeFieldTypeMap || {});
+
+  const [xField, setXField] = useState(config.xField || "");
+  const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
-  // const [stringFields, setStringFields] = useState<string[]>([]);
-  // const [numberFields, setNumberFields] = useState<string[]>([]);
-  const [initialized, setInitialized] = useState(false);
 
-  const actualData = useMemo(() => {
-    const nodeResult = executedData.find((d) => d.node_id === nodeId);
-    return nodeResult?.output || [];
-  }, [executedData, nodeId]);
+  const actualData = useMemo(
+    () => data.executionData || [],
+    [data.executionData]
+  );
 
-  // infer fields from context
+  // Initialize default fields if empty
   useEffect(() => {
-    // const strFields = fields.filter((f) => fieldTypes[f] === "string");
-    // const numFields = fields.filter((f) => fieldTypes[f] === "number");
+    if (!xField && fields.length > 0) setXField(fields[0]);
+    if (!yField && fields.length > 0) setYField(fields[0]);
+  }, [fields, xField, yField]);
 
-    // setStringFields(strFields);
-    // setNumberFields(numFields);
-
-    // Only set initial values if not already initialized
-    if (!initialized && !yField) {
-      setXField(config.xField || fields[0] || ""); // optional
-      setYField(config.yField || fields[0] || "");
-      setInitialized(true);
-    }
-  }, [fields, fieldTypes, config.xField, config.yField, initialized, yField]);
-
-  // Save fields to node config when they change
+  // Sync xField/yField to node config
   useEffect(() => {
     if (!yField) return;
-    
     setNodes((nds) =>
       nds.map((n) =>
-        n.id === nodeId
+        n.id === id
           ? {
               ...n,
               data: {
                 ...n.data,
-                config: { ...(n.data?.config ?? {}), xField, yField },
-
+                config: { ...(n.data?.config || {}), xField, yField },
               },
             }
           : n
       )
     );
-  }, [xField, yField, nodeId, setNodes]);
+  }, [id, xField, yField, setNodes]);
 
-  // map data (convert to percentages if needed)
+  // Map data for chart
   useEffect(() => {
     if (!yField) return;
-
     const values = actualData.map((row: any) => row[yField] ?? 0);
-    const total = values.reduce((acc: any, v: any) => acc + v, 0);
+    const total = values.reduce((acc: number, v: number) => acc + v, 0);
 
-    const mapped = values.map((v: any, i: any) => ({
+    const mapped = values.map((v: number, i: number) => ({
       name: xField ? actualData[i][xField] ?? `Item ${i + 1}` : `${i + 1}`,
       value: total ? (v / total) * 100 : v,
     }));
@@ -98,7 +78,7 @@ export const LineChartNode = ({
       {/* X-axis selector */}
       {fields.length > 0 && (
         <div>
-          <label className="block mb-1 text-gray-600">X-axis</label>
+          <label className="block mb-1 text-gray-600 text-[10px]">X-axis</label>
           <select
             value={xField}
             onChange={(e) => setXField(e.target.value)}
@@ -114,8 +94,8 @@ export const LineChartNode = ({
       )}
 
       {/* Y-axis selector */}
-      <div>
-        <label className="block mb-1 text-gray-600">Values</label>
+      <div className="mt-1">
+        <label className="block mb-1 text-gray-600 text-[10px]">Values</label>
         <select
           value={yField}
           onChange={(e) => setYField(e.target.value)}
