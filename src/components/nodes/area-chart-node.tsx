@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/chart";
 import { AreaChart, XAxis, YAxis, CartesianGrid, Area } from "recharts";
 import { useFieldTypes } from "@/contexts/FieldTypesContext";
+import { useReactFlow } from "@xyflow/react";
 
 interface AreaChartNodeProps {
   nodeId: string;
@@ -19,12 +20,14 @@ export const AreaChartNode = ({
   executedData = [],
   config = {},
 }: AreaChartNodeProps) => {
-  const { fieldTypes } = useFieldTypes();
-  const [xField, setXField] = useState("");
-  const [yField, setYField] = useState("");
+  const { fields, fieldTypes } = useFieldTypes();
+  const { setNodes } = useReactFlow();
+  const [xField, setXField] = useState(config.xField || "");
+  const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
   const [stringFields, setStringFields] = useState<string[]>([]);
   const [numberFields, setNumberFields] = useState<string[]>([]);
+  const [initialized, setInitialized] = useState(false);
 
   const actualData = useMemo(() => {
     const nodeResult = executedData.find((d) => d.node_id === nodeId);
@@ -32,18 +35,38 @@ export const AreaChartNode = ({
   }, [executedData, nodeId]);
 
   useEffect(() => {
-    if (!actualData.length) return;
-
-    const fields = Object.keys(actualData[0] || {});
     const strFields = fields.filter((f) => fieldTypes[f] === "string");
     const numFields = fields.filter((f) => fieldTypes[f] === "number");
 
     setStringFields(strFields);
     setNumberFields(numFields);
 
-    setXField(config.xField || strFields[0] || fields[0] || "");
-    setYField(config.yField || numFields[0] || fields[1] || "");
-  }, [actualData, fieldTypes, config]);
+    // Only set initial values if not already initialized
+    if (!initialized && (!xField || !yField)) {
+      setXField(config.xField || strFields[0] || fields[0] || "");
+      setYField(config.yField || numFields[0] || fields[1] || "");
+      setInitialized(true);
+    }
+  }, [fields, fieldTypes, config.xField, config.yField, initialized, xField, yField]);
+
+  // Save fields to node config when they change
+  useEffect(() => {
+    if (!xField || !yField) return;
+    
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                config: { ...n.data?.config, xField, yField },
+              },
+            }
+          : n
+      )
+    );
+  }, [xField, yField, nodeId, setNodes]);
 
   useEffect(() => {
     if (!xField || !yField) return;

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/chart";
 import { PieChart, Pie, Cell } from "recharts";
 import { useFieldTypes } from "@/contexts/FieldTypesContext";
+import { useReactFlow } from "@xyflow/react";
 
 const COLORS = [
   "#9f7aea",
@@ -28,25 +29,49 @@ export const PieChartNode = ({
   executedData = [],
   config = {},
 }: PieChartNodeProps) => {
-  const { fieldTypes } = useFieldTypes();
-  const [yField, setYField] = useState("");
+  const { fields, fieldTypes } = useFieldTypes();
+  const { setNodes } = useReactFlow();
+  const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
   const [numberFields, setNumberFields] = useState<string[]>([]);
+  const [initialized, setInitialized] = useState(false);
 
   const actualData = useMemo(() => {
     const nodeResult = executedData.find((d) => d.node_id === nodeId);
     return nodeResult?.output || [];
   }, [executedData, nodeId]);
 
-  // Infer numeric fields
+  // Infer numeric fields from context and initialize yField only once
   useEffect(() => {
-    if (!actualData.length) return;
-    const fields = Object.keys(actualData[0] || {});
     const numFields = fields.filter((f) => fieldTypes[f] === "number");
-
     setNumberFields(numFields);
-    setYField(config.yField || numFields[0] || fields[0] || "");
-  }, [actualData, fieldTypes, config]);
+    
+    // Only set initial value if not already initialized
+    if (!initialized && !yField && numFields.length > 0) {
+      const initialField = config.yField || numFields[0] || fields[0] || "";
+      setYField(initialField);
+      setInitialized(true);
+    }
+  }, [fields, fieldTypes, config.yField, initialized, yField]);
+
+  // Save yField to node config when it changes
+  useEffect(() => {
+    if (!yField) return;
+    
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                config: { ...n.data?.config, yField },
+              },
+            }
+          : n
+      )
+    );
+  }, [yField, nodeId, setNodes]);
 
   // Map chart data and convert to percentages
   useEffect(() => {

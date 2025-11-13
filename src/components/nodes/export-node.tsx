@@ -1,13 +1,6 @@
 import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 
 interface ExportNodeProps {
   id: string; // node id
@@ -28,21 +21,9 @@ export const ExportDataNode = ({ id, executedData = [] }: ExportNodeProps) => {
     else setTableData([]);
   }, [executedData, id]);
 
-  const columns = tableData[0] ? Object.keys(tableData[0]) : [];
-
-  // Function to safely render cell values
-  const renderCellValue = (value: any) => {
-    if (typeof value === "object" && value !== null) {
-      return Array.isArray(value)
-        ? JSON.stringify(value)
-        : JSON.stringify(value);
-    }
-    return value ?? "";
-  };
-
   return (
     <BaseNode title="Export Data" typeLabel="Export" inputs={1} outputs={0}>
-      <div className="space-y-2 text-[10px] max-w-120">
+      <div className="space-y-2 text-[10px] w-full min-w-[500px]">
         <label className="block text-[10px]">File Format</label>
         <select
           value={format}
@@ -54,30 +35,11 @@ export const ExportDataNode = ({ id, executedData = [] }: ExportNodeProps) => {
         </select>
 
         {tableData.length > 0 ? (
-          <div className="border rounded mt-1 max-h-64 overflow-auto w-full">
-            <Table className="text-xs min-w-full">
-              <TableHeader>
-                <TableRow>
-                  {columns.map((col) => (
-                    <TableHead key={col}>{col}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tableData.map((row, i) => (
-                  <TableRow key={i}>
-                    {columns.map((col) => (
-                      <TableCell key={col}>
-                        {renderCellValue(row[col])}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable data={tableData} pageSize={10} />
         ) : (
-          <div className="text-gray-400 text-[10px]">No data yet</div>
+          <div className="text-gray-400 text-[10px] text-center py-8 border rounded">
+            No data yet. Run the flow to see results.
+          </div>
         )}
       </div>
     </BaseNode>

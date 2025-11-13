@@ -77,44 +77,54 @@ export const GroupNode = ({ id, data }: any) => {
     options: string[],
     label: string
   ) => (
-    <div>
-      <div className="flex justify-between items-center">
-        <span className="font-medium text-[10px]">{label}</span>
+    <div className="space-y-1 overflow-visible">
+      <div className="flex justify-between items-center gap-1">
+        <span className="font-medium text-[10px] truncate">{label}</span>
         <button
           onClick={() => addItem(setter, arr)}
-          className="text-purple-600 hover:text-purple-800"
+          className="text-purple-600 hover:text-purple-800 flex-shrink-0 w-4 h-4 flex items-center justify-center"
+          title={`Add ${label}`}
         >
-          <Plus size={12} />
+          <Plus size={10} />
         </button>
       </div>
-      {arr.map((val, i) => (
-        <div key={i} className="flex gap-1 items-center mt-1">
-          <select
-            value={val}
-            onChange={(e) => updateItem(setter, arr, i, e.target.value)}
-            className="flex-1 border rounded p-1 text-[10px]"
-          >
-            <option value="">Select</option>
-            {options.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => removeItem(setter, arr, i)}
-            className="text-gray-400 hover:text-red-500"
-          >
-            <Trash2 size={10} />
-          </button>
-        </div>
-      ))}
+      <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+        {arr.length === 0 ? (
+          <div className="text-[9px] text-gray-400 italic py-1">
+            Click + to add
+          </div>
+        ) : (
+          arr.map((val, i) => (
+            <div key={i} className="flex gap-1 items-center">
+              <select
+                value={val}
+                onChange={(e) => updateItem(setter, arr, i, e.target.value)}
+                className="flex-1 border rounded px-1 py-0.5 text-[10px] min-w-0 max-w-full"
+              >
+                <option value="">Select</option>
+                {options.map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => removeItem(setter, arr, i)}
+                className="text-gray-400 hover:text-red-500 flex-shrink-0 w-4 h-4 flex items-center justify-center"
+                title="Remove"
+              >
+                <Trash2 size={9} />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 
   return (
     <BaseNode title="Group" typeLabel="Aggregate">
-      <div className="space-y-4">
+      <div className="space-y-2 w-44 max-w-full overflow-hidden">
         {renderSelectList(groupByFields, setGroupByFields, fields, "Group By")}
         {renderSelectList(
           aggregates,

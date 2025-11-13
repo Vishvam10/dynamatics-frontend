@@ -159,7 +159,8 @@ function BuilderCanvas() {
       }
     };
     fetchFlow();
-  }, [flow_uid, reactFlowInstance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flow_uid]);
 
   // -------------------------
   // Node / Edge Callbacks
