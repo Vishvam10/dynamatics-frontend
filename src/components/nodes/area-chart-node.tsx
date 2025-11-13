@@ -1,79 +1,64 @@
 import { useState, useEffect, useMemo } from "react";
-import { BaseNode } from "../base-node";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { AreaChart, XAxis, YAxis, CartesianGrid, Area } from "recharts";
-import { useFieldTypes } from "@/contexts/FieldTypesContext";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
+import { useBuilder } from "@/contexts/builder-context";
+import type { BaseNodeData } from "@/types/node-data";
+import { BaseNode } from "./base-node";
 
-interface AreaChartNodeProps {
-  nodeId: string;
-  executedData?: any[];
-  config?: { xField?: string; yField?: string };
-}
-
-export const AreaChartNode = ({
-  nodeId,
-  executedData = [],
-  config = {},
-}: AreaChartNodeProps) => {
-  const { fields, fieldTypes } = useFieldTypes();
+export const AreaChartNode = ({ id, data }: NodeProps<BaseNodeData>) => {
+  const builderCtx = useBuilder();
+  const fields = Object.keys(builderCtx.nodeFieldsTypeMap || {});
   const { setNodes } = useReactFlow();
+  const config = data.config || {};
+
   const [xField, setXField] = useState(config.xField || "");
   const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
-  // const [stringFields, setStringFields] = useState<string[]>([]);
-  // const [numberFields, setNumberFields] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
 
-  const actualData = useMemo(() => {
-    const nodeResult = executedData.find((d) => d.node_id === nodeId);
-    return nodeResult?.output || [];
-  }, [executedData, nodeId]);
+  const actualData = useMemo(
+    () => data.executionData || [],
+    [data.executionData]
+  );
 
+  // Initialize fields only once
   useEffect(() => {
-    // const strFields = fields.filter((f) => fieldTypes[f] === "string");
-    // const numFields = fields.filter((f) => fieldTypes[f] === "number");
-
-    // setStringFields(strFields);
-    // setNumberFields(numFields);
-
-    // Only set initial values if not already initialized
-    if (!initialized && (!xField || !yField)) {
-      setXField(config.xField || fields[0] || fields[0] || "");
-      setYField(config.yField || fields[0] || fields[1] || "");
+    if (!initialized && fields.length > 0) {
+      setXField(config.xField || fields[0] || "");
+      setYField(config.yField || fields[1] || fields[0] || "");
       setInitialized(true);
     }
-  }, [fields, fieldTypes, config.xField, config.yField, initialized, xField, yField]);
+  }, [fields, config.xField, config.yField, initialized]);
 
   // Save fields to node config when they change
   useEffect(() => {
     if (!xField || !yField) return;
-    
     setNodes((nds) =>
       nds.map((n) =>
-        n.id === nodeId
+        n.id === id
           ? {
               ...n,
               data: {
                 ...n.data,
-                config: { ...(n.data?.config ?? {}), xField, yField },
-
+                config: { ...(n.data?.config || {}), xField, yField },
               },
             }
           : n
       )
     );
-  }, [xField, yField, nodeId, setNodes]);
+  }, [xField, yField, id, setNodes]);
 
+  // Map data for chart
   useEffect(() => {
     if (!xField || !yField) return;
 
-    const mapped = actualData.map((row: any) => ({
-      name: row[xField] ?? "Unknown",
+    const mapped = actualData.map((row: any, i: number) => ({
+      name: row[xField] ?? `Item ${i + 1}`,
       value: row[yField] ?? 0,
     }));
 
@@ -91,24 +76,26 @@ export const AreaChartNode = ({
       className="border-t-purple-600"
     >
       {/* X-axis selector */}
-      <div>
-        <label className="block mb-1 text-gray-600">X-axis</label>
-        <select
-          value={xField}
-          onChange={(e) => setXField(e.target.value)}
-          className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
-        >
-          {fields.map((f) => (
-            <option key={f} value={f}>
-              {f}
-            </option>
-          ))}
-        </select>
-      </div>
+      {fields.length > 0 && (
+        <div>
+          <label className="block mb-1 text-gray-600 text-[10px]">X-axis</label>
+          <select
+            value={xField}
+            onChange={(e) => setXField(e.target.value)}
+            className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
+          >
+            {fields.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Y-axis selector */}
       <div>
-        <label className="block mb-1 text-gray-600">Y-axis</label>
+        <label className="block mb-1 text-gray-600 text-[10px]">Y-axis</label>
         <select
           value={yField}
           onChange={(e) => setYField(e.target.value)}
@@ -122,53 +109,28 @@ export const AreaChartNode = ({
         </select>
       </div>
 
-      {/* Chart */}
+      {/* Area Chart */}
       {hasData ? (
-        <div className="space-y-2 text-[10px] w-80 mr-4">
-          <div className="flex mt-8 mb-4">
-            <ChartContainer
-              config={{ value: { label: "Value", color: "#9f7aea" } }}
-              className="w-full h-auto"
-            >
-              <AreaChart data={chartData}>
-                {/* Grid */}
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
-
-                {/* X-axis */}
-                <XAxis
-                  dataKey="name"
-                  label={{
-                    value: xField,
-                    position: "insideBottom",
-                    offset: -5,
-                  }}
-                  tick={{ fontSize: 10 }}
-                />
-
-                {/* Y-axis */}
-                <YAxis
-                  label={{
-                    value: yField,
-                    angle: -90,
-                    position: "insideLeft",
-                    offset: 5,
-                  }}
-                  tick={{ fontSize: 10 }}
-                />
-
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  fill="#9f7aea"
-                  stroke="#9f7aea"
-                  strokeWidth={2}
-                  dot={{ r: 2 }}
-                />
-              </AreaChart>
-            </ChartContainer>
-          </div>
+        <div className="flex justify-center pt-2 w-80 h-48">
+          <ChartContainer
+            config={{ value: { label: "Value", color: "#9f7aea" } }}
+            className="w-full h-full"
+          >
+            <AreaChart data={chartData}>
+              <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#9f7aea"
+                fill="#9f7aea"
+                strokeWidth={2}
+                dot={{ r: 2 }}
+              />
+            </AreaChart>
+          </ChartContainer>
         </div>
       ) : (
         <div className="text-center text-gray-400 text-xs pt-4">
