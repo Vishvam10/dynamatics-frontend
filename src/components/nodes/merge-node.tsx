@@ -1,25 +1,43 @@
 import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
-import { useReactFlow } from "@xyflow/react";
-import { useFieldTypes } from "@/contexts/FieldTypesContext";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
+import { useBuilder } from "@/contexts/builder-context";
+import type { BaseNodeData } from "@/types/node-data";
 
 const MERGE_TYPES = ["inner", "outer", "left", "right"];
 
-export const MergeNode = ({ id, data }: any) => {
-  const { config = {} } = data;
-  const { fields } = useFieldTypes();
+export const MergeNode = (props: NodeProps<BaseNodeData>) => {
+  const { id, data } = props;
+  const builderCtx = useBuilder();
+  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
   const { setNodes } = useReactFlow();
 
-  const [mergeType, setMergeType] = useState(config?.mergeType || "inner");
-  const [mergeField, setMergeField] = useState(config?.mergeField || "");
+  const [mergeType, setMergeType] = useState(data.config?.mergeType || "inner");
+  const [mergeField, setMergeField] = useState(data.config?.mergeField || "");
 
+  // Sync to node config
   useEffect(() => {
     setNodes((nds) =>
-      nds.map((n) =>
-        n.id === id ? { ...n, config: { how: mergeType, "on": mergeField } } : n
-      )
+      nds.map((n) => {
+        if (n.id !== id) return n;
+        const currentData = n.data || {};
+        const currentConfig = (n.data?.config as Record<string, any>) || {};
+        return {
+          ...n,
+          data: {
+            ...currentData,
+            config: {
+              ...currentConfig,
+              mergeType,
+              mergeField,
+            },
+          },
+        };
+      })
     );
-  }, [id, mergeType, mergeField, setNodes]);
+  }, [mergeType, mergeField, id, setNodes]);
+
+  const fieldOptions = Object.keys(nodeFieldTypeMap || {});
 
   return (
     <BaseNode title="Merge" typeLabel="Transform" inputs={2} outputs={1}>
@@ -48,7 +66,7 @@ export const MergeNode = ({ id, data }: any) => {
           onChange={(e) => setMergeField(e.target.value)}
         >
           <option value="">Select Field</option>
-          {fields.map((f: string) => (
+          {fieldOptions.map((f) => (
             <option key={f} value={f}>
               {f}
             </option>
