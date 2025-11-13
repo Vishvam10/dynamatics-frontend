@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { BaseNode } from "./base-node";
-import { useReactFlow } from "@xyflow/react";
-import { useFieldTypes } from "@/contexts/FieldTypesContext";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
+import { useBuilder } from "@/contexts/builder-context";
+import type { BaseNodeData } from "@/types/node-data";
 
 const AGGREGATES = [
   "count",
@@ -16,49 +17,48 @@ const AGGREGATES = [
   "median",
 ];
 
-export const GroupNode = ({ id, data }: any) => {
-  const { config = {} } = data;
-  const { fields } = useFieldTypes();
+export const GroupNode = (props: NodeProps<BaseNodeData>) => {
+  const { id, data } = props;
+  const builderCtx = useBuilder();
+  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
   const { setNodes } = useReactFlow();
 
-  // Initialize from config or empty arrays
-  const [selectedFields, setSelectedFields] = useState<string[]>(
-    config?.fields && config.fields.length ? config.fields : []
-  );
   const [groupByFields, setGroupByFields] = useState<string[]>(
-    config?.group_by && config.group_by.length ? config.group_by : []
+    data.config?.group_by ?? []
   );
   const [aggregates, setAggregates] = useState<string[]>(
-    config?.aggregations && config.aggregations.length
-      ? config.aggregations
-      : []
+    data.config?.aggregations ?? []
+  );
+  const [selectedFields, setSelectedFields] = useState<string[]>(
+    data.config?.fields ?? []
   );
 
   // Sync with top-level node config
   useEffect(() => {
     setNodes((nds) =>
-      nds.map((n) =>
-        n.id === id
-          ? {
-              ...n,
-              config: {
-                fields: selectedFields,
-                group_by: groupByFields,
-                aggregations: aggregates,
-              },
-              data: { ...n.data },
-            }
-          : n
-      )
+      nds.map((n) => {
+        if (n.id !== id) return n;
+        const currentData = n.data || {};
+        const currentConfig = (n.data?.config as Record<string, any>) || {};
+        return {
+          ...n,
+          data: {
+            ...currentData,
+            config: {
+              ...currentConfig,
+              group_by: groupByFields,
+              aggregations: aggregates,
+              fields: selectedFields,
+            },
+          },
+        };
+      })
     );
-  }, [id, selectedFields, groupByFields, aggregates, setNodes]);
+  }, [groupByFields, aggregates, selectedFields, id, setNodes]);
 
   const addItem = (setter: any, arr: string[]) => setter([...arr, ""]);
-  const removeItem = (setter: any, arr: string[], idx: number) => {
-    const copy = [...arr];
-    copy.splice(idx, 1);
-    setter(copy);
-  };
+  const removeItem = (setter: any, arr: string[], idx: number) =>
+    setter(arr.filter((_, i) => i !== idx));
   const updateItem = (
     setter: any,
     arr: string[],
@@ -81,7 +81,7 @@ export const GroupNode = ({ id, data }: any) => {
         <span className="font-medium text-[10px] truncate">{label}</span>
         <button
           onClick={() => addItem(setter, arr)}
-          className="text-purple-600 hover:text-purple-800 flex-shrink-0 w-4 h-4 flex items-center justify-center"
+          className="text-purple-600 hover:text-purple-800 shrink-0 w-4 h-4 flex items-center justify-center"
           title={`Add ${label}`}
         >
           <Plus size={10} />
@@ -109,7 +109,7 @@ export const GroupNode = ({ id, data }: any) => {
               </select>
               <button
                 onClick={() => removeItem(setter, arr, i)}
-                className="text-gray-400 hover:text-red-500 flex-shrink-0 w-4 h-4 flex items-center justify-center"
+                className="text-gray-400 hover:text-red-500 shrink-0 w-4 h-4 flex items-center justify-center"
                 title="Remove"
               >
                 <Trash2 size={9} />
@@ -121,10 +121,17 @@ export const GroupNode = ({ id, data }: any) => {
     </div>
   );
 
+  const fieldOptions = Object.keys(nodeFieldTypeMap || {});
+
   return (
     <BaseNode title="Group" typeLabel="Aggregate">
       <div className="space-y-2 w-44 max-w-full overflow-hidden">
-        {renderSelectList(groupByFields, setGroupByFields, fields, "Group By")}
+        {renderSelectList(
+          groupByFields,
+          setGroupByFields,
+          fieldOptions,
+          "Group By"
+        )}
         {renderSelectList(
           aggregates,
           setAggregates,
@@ -134,7 +141,7 @@ export const GroupNode = ({ id, data }: any) => {
         {renderSelectList(
           selectedFields,
           setSelectedFields,
-          fields,
+          fieldOptions,
           "Aggregate On"
         )}
       </div>
