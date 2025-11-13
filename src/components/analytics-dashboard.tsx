@@ -7,28 +7,28 @@ import {
 import {
   LineChart,
   Line,
-  AreaChart,
-  Area,
+  // AreaChart,
+  // Area,
   ScatterChart,
   Scatter,
-  BarChart,
-  Bar,
+  // BarChart,
+  // Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   ReferenceLine,
 } from "recharts";
 
-function mulberry32(seed: number) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-const seed = 12345;
-const random = mulberry32(seed);
+// function mulberry32(seed: number) {
+//   return function () {
+//     let t = (seed += 0x6d2b79f5);
+//     t = Math.imul(t ^ (t >>> 15), t | 1);
+//     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+//     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+//   };
+// }
+// const seed = 12345;
+// const random = mulberry32(seed);
 
 // Generate mock data for demonstrations
 const generateTimeSeriesData = () => {
@@ -95,35 +95,35 @@ const generateTrendData = () => {
   ];
 };
 
-const generateDistributionData = () => {
-  const data = [];
-  for (let i = 0; i < 100; i++) {
-    const value = 0.89 * 100;
-    data.push({
-      bin: Math.floor(value / 10) * 10,
-      count: 1,
-    });
-  }
+// const generateDistributionData = () => {
+//   const data = [];
+//   for (let i = 0; i < 100; i++) {
+//     const value = 0.89 * 100;
+//     data.push({
+//       bin: Math.floor(value / 10) * 10,
+//       count: 1,
+//     });
+//   }
 
-  // Aggregate counts
-  const aggregated = data.reduce((acc: any, item) => {
-    const existing = acc.find((a: any) => a.bin === item.bin);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      acc.push({ bin: item.bin, count: 1 });
-    }
-    return acc;
-  }, []);
+//   // Aggregate counts
+//   const aggregated = data.reduce((acc: any, item) => {
+//     const existing = acc.find((a: any) => a.bin === item.bin);
+//     if (existing) {
+//       existing.count += 1;
+//     } else {
+//       acc.push({ bin: item.bin, count: 1 });
+//     }
+//     return acc;
+//   }, []);
 
-  return aggregated.sort((a: any, b: any) => a.bin - b.bin);
-};
+//   return aggregated.sort((a: any, b: any) => a.bin - b.bin);
+// };
 
 export function AnalyticsDashboard() {
   const timeSeriesData = generateTimeSeriesData();
   const outlierData = generateOutlierData();
   const trendData = generateTrendData();
-  const distributionData = generateDistributionData();
+  // const distributionData = generateDistributionData();
 
   const anomalyCount = 12;
   const outlierCount = 32;

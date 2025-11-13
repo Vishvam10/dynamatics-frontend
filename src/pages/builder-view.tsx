@@ -59,10 +59,10 @@ function BuilderCanvas() {
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [flowData, setFlowData] = useState<Flow | null>(null);
+  const [_flowData, setFlowData] = useState<Flow | null>(null);
 
   const [executedFlowData, setExecutedFlowData] = useState<any[]>([]);
-  const [fieldTypesMap, setFieldTypesMap] = useState<Record<string, any>>({});
+  const [_fieldTypesMap, setFieldTypesMap] = useState<Record<string, any>>({});
 
   const [loading, setLoading] = useState(true);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);

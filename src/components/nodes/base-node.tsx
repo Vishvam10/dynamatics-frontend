@@ -1,4 +1,4 @@
-import { Handle, NodeResizer, Position } from "@xyflow/react";
+import { Handle, Position } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import { nodeColors } from "@/utils/node-colours";
 

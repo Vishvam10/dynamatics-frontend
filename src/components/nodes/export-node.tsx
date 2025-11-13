@@ -12,7 +12,7 @@ interface ExportNodeProps {
 }
 
 export const ViewDataNode = ({ id, executedData = [] }: ExportNodeProps) => {
-  const [format, setFormat] = useState("CSV");
+  // const [format, setFormat] = useState("CSV");
   const [tableData, setTableData] = useState<any[]>([]);
 
   useEffect(() => {

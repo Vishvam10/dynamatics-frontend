@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { BaseNode } from "./base-node";
 import { useReactFlow } from "@xyflow/react";
 import { useFieldTypes } from "@/contexts/FieldTypesContext";

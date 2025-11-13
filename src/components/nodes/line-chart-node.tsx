@@ -61,7 +61,8 @@ export const LineChartNode = ({
               ...n,
               data: {
                 ...n.data,
-                config: { ...n.data?.config, xField, yField },
+                config: { ...(n.data?.config ?? {}), xField, yField },
+
               },
             }
           : n

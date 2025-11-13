@@ -63,9 +63,9 @@ export const PieChartNode = ({
         n.id === nodeId
           ? {
               ...n,
+              config: { yField },
               data: {
                 ...n.data,
-                config: { ...n.data?.config, yField },
               },
             }
           : n

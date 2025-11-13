@@ -60,7 +60,8 @@ export const AreaChartNode = ({
               ...n,
               data: {
                 ...n.data,
-                config: { ...n.data?.config, xField, yField },
+                config: { ...(n.data?.config ?? {}), xField, yField },
+
               },
             }
           : n
