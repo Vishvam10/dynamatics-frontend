@@ -25,8 +25,8 @@ export const LineChartNode = ({
   const [xField, setXField] = useState(config.xField || ""); // optional categorical
   const [yField, setYField] = useState(config.yField || ""); // numeric values
   const [chartData, setChartData] = useState<any[]>([]);
-  const [stringFields, setStringFields] = useState<string[]>([]);
-  const [numberFields, setNumberFields] = useState<string[]>([]);
+  // const [stringFields, setStringFields] = useState<string[]>([]);
+  // const [numberFields, setNumberFields] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
 
   const actualData = useMemo(() => {
@@ -36,16 +36,16 @@ export const LineChartNode = ({
 
   // infer fields from context
   useEffect(() => {
-    const strFields = fields.filter((f) => fieldTypes[f] === "string");
-    const numFields = fields.filter((f) => fieldTypes[f] === "number");
+    // const strFields = fields.filter((f) => fieldTypes[f] === "string");
+    // const numFields = fields.filter((f) => fieldTypes[f] === "number");
 
-    setStringFields(strFields);
-    setNumberFields(numFields);
+    // setStringFields(strFields);
+    // setNumberFields(numFields);
 
     // Only set initial values if not already initialized
     if (!initialized && !yField) {
-      setXField(config.xField || strFields[0] || ""); // optional
-      setYField(config.yField || numFields[0] || "");
+      setXField(config.xField || fields[0] || ""); // optional
+      setYField(config.yField || fields[0] || "");
       setInitialized(true);
     }
   }, [fields, fieldTypes, config.xField, config.yField, initialized, yField]);
@@ -96,7 +96,7 @@ export const LineChartNode = ({
       className="border-t-purple-600"
     >
       {/* X-axis selector */}
-      {stringFields.length > 0 && (
+      {fields.length > 0 && (
         <div>
           <label className="block mb-1 text-gray-600">X-axis</label>
           <select
@@ -104,7 +104,7 @@ export const LineChartNode = ({
             onChange={(e) => setXField(e.target.value)}
             className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
           >
-            {stringFields.map((f) => (
+            {fields.map((f) => (
               <option key={f} value={f}>
                 {f}
               </option>
@@ -121,7 +121,7 @@ export const LineChartNode = ({
           onChange={(e) => setYField(e.target.value)}
           className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
         >
-          {numberFields.map((f) => (
+          {fields.map((f) => (
             <option key={f} value={f}>
               {f}
             </option>

@@ -43,12 +43,12 @@ export const PieChartNode = ({
 
   // Infer numeric fields from context and initialize yField only once
   useEffect(() => {
-    const numFields = fields.filter((f) => fieldTypes[f] === "number");
-    setNumberFields(numFields);
+    // const numFields = fields.filter((f) => fieldTypes[f] === "number");
+    // setNumberFields(numFields);
     
     // Only set initial value if not already initialized
-    if (!initialized && !yField && numFields.length > 0) {
-      const initialField = config.yField || numFields[0] || fields[0] || "";
+    if (!initialized && !yField && fields.length > 0) {
+      const initialField = config.yField || fields[0] || fields[0] || "";
       setYField(initialField);
       setInitialized(true);
     }
@@ -106,7 +106,7 @@ export const PieChartNode = ({
           onChange={(e) => setYField(e.target.value)}
           className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
         >
-          {numberFields.map((f) => (
+          {fields.map((f) => (
             <option key={f} value={f}>
               {f}
             </option>

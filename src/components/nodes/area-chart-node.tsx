@@ -25,8 +25,8 @@ export const AreaChartNode = ({
   const [xField, setXField] = useState(config.xField || "");
   const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
-  const [stringFields, setStringFields] = useState<string[]>([]);
-  const [numberFields, setNumberFields] = useState<string[]>([]);
+  // const [stringFields, setStringFields] = useState<string[]>([]);
+  // const [numberFields, setNumberFields] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
 
   const actualData = useMemo(() => {
@@ -35,16 +35,16 @@ export const AreaChartNode = ({
   }, [executedData, nodeId]);
 
   useEffect(() => {
-    const strFields = fields.filter((f) => fieldTypes[f] === "string");
-    const numFields = fields.filter((f) => fieldTypes[f] === "number");
+    // const strFields = fields.filter((f) => fieldTypes[f] === "string");
+    // const numFields = fields.filter((f) => fieldTypes[f] === "number");
 
-    setStringFields(strFields);
-    setNumberFields(numFields);
+    // setStringFields(strFields);
+    // setNumberFields(numFields);
 
     // Only set initial values if not already initialized
     if (!initialized && (!xField || !yField)) {
-      setXField(config.xField || strFields[0] || fields[0] || "");
-      setYField(config.yField || numFields[0] || fields[1] || "");
+      setXField(config.xField || fields[0] || fields[0] || "");
+      setYField(config.yField || fields[0] || fields[1] || "");
       setInitialized(true);
     }
   }, [fields, fieldTypes, config.xField, config.yField, initialized, xField, yField]);
@@ -98,7 +98,7 @@ export const AreaChartNode = ({
           onChange={(e) => setXField(e.target.value)}
           className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
         >
-          {stringFields.map((f) => (
+          {fields.map((f) => (
             <option key={f} value={f}>
               {f}
             </option>
@@ -114,7 +114,7 @@ export const AreaChartNode = ({
           onChange={(e) => setYField(e.target.value)}
           className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
         >
-          {numberFields.map((f) => (
+          {fields.map((f) => (
             <option key={f} value={f}>
               {f}
             </option>
