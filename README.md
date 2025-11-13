@@ -1,4 +1,4 @@
-# Dynamatics
+# Dynamatics Frontend
 
 Dynamatics is **FlowGraph Analytics Builder**. It's a React-based application that allows
 **users to build custom analytics workflows** using a visual node-based interface. Users can
