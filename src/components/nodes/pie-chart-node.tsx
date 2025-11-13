@@ -19,10 +19,12 @@ const COLORS = [
   "#faf089",
 ];
 
-export const PieChartNode = ({ id, data }: NodeProps<BaseNodeData>) => {
+export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
   const builderCtx = useBuilder();
   const fields = Object.keys(builderCtx.nodeFieldsTypeMap || {});
   const { setNodes } = useReactFlow();
+
+  const { id, data } = props;
   const config = data.config || {};
 
   const [yField, setYField] = useState(config.yField || "");

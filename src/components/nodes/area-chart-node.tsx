@@ -10,10 +10,12 @@ import { useBuilder } from "@/contexts/builder-context";
 import type { BaseNodeData } from "@/types/node-data";
 import { BaseNode } from "./base-node";
 
-export const AreaChartNode = ({ id, data }: NodeProps<BaseNodeData>) => {
+export const AreaChartNode = (props: NodeProps<BaseNodeData>) => {
   const builderCtx = useBuilder();
   const fields = Object.keys(builderCtx.nodeFieldsTypeMap || {});
   const { setNodes } = useReactFlow();
+
+  const { id, data } = props;
   const config = data.config || {};
 
   const [xField, setXField] = useState(config.xField || "");

@@ -39,10 +39,11 @@ import {
   // View Nodes
   ViewDataNode,
 
-  // BarChartNode,
-  // LineChartNode,
-  // AreaChartNode,
-  // PieChartNode
+  // Chart Nodes
+  BarChartNode,
+  LineChartNode,
+  AreaChartNode,
+  PieChartNode,
 } from "@/components/nodes";
 
 import { MergeNode } from "@/components/nodes/merge-node";
@@ -85,40 +86,12 @@ export function BuilderCanvas() {
       exampleData: ExampleDataNode,
       dataSource: DataSourceNode,
       export: ViewDataNode,
-      //   pieChart: (props: BaseNodeData) => (
-      //     <PieChartNode
-      //       {...props}
-      //       executedData={executedFlowData}
-      //       nodeId={props.id}
-      //       config={props.data?.config || {}}
-      //     />
-      //   ),
-      //   barChart: (props: BaseNodeData) => (
-      //     <BarChartNode
-      //       {...props}
-      //       executedData={executedFlowData}
-      //       nodeId={props.id}
-      //       config={props.data?.config || {}}
-      //     />
-      //   ),
-      //   lineChart: (props: BaseNodeData) => (
-      //     <LineChartNode
-      //       {...props}
-      //       executedData={executedFlowData}
-      //       nodeId={props.id}
-      //       config={props.data?.config || {}}
-      //     />
-      //   ),
-      //   areaChart: (props: BaseNodeData) => (
-      //     <AreaChartNode
-      //       {...props}
-      //       executedData={executedFlowData}
-      //       nodeId={props.id}
-      //       config={props.data?.config || {}}
-      //     />
-      //   ),
+      pieChart: PieChartNode,
+      barChart: BarChartNode,
+      lineChart: LineChartNode,
+      areaChart: AreaChartNode,
     }),
-    [executedFlowData]
+    []
   );
 
   // -------------------------

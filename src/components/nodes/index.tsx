@@ -11,7 +11,7 @@ import { LineChartNode } from "./line-chart-node";
 import { AreaChartNode } from "./area-chart-node";
 import { PieChartNode } from "./pie-chart-node";
 
-import { ViewDataNode } from "./export-node";
+import { ViewDataNode } from "./view-data-node";
 
 export {
   DataSourceNode,

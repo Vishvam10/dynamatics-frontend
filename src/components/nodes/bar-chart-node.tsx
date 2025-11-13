@@ -10,11 +10,12 @@ import { useReactFlow, type NodeProps } from "@xyflow/react";
 import { useBuilder } from "@/contexts/builder-context";
 import type { BaseNodeData } from "@/types/node-data";
 
-export const BarChartNode = ({ id, data }: NodeProps<BaseNodeData>) => {
+export const BarChartNode = (props: NodeProps<BaseNodeData>) => {
   const builderCtx = useBuilder();
   const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
   const { setNodes } = useReactFlow();
 
+  const { id, data } = props;
   const config = data.config || {};
   const fields = Object.keys(nodeFieldTypeMap || {});
 
