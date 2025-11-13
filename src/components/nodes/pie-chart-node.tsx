@@ -6,8 +6,9 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { PieChart, Pie, Cell } from "recharts";
-import { useFieldTypes } from "@/contexts/FieldTypesContext";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
+import { useBuilder } from "@/contexts/builder-context";
+import type { BaseNodeData } from "@/types/node-data";
 
 const COLORS = [
   "#9f7aea",
@@ -18,70 +19,55 @@ const COLORS = [
   "#faf089",
 ];
 
-interface PieChartNodeProps {
-  nodeId: string;
-  executedData?: any[];
-  config?: { yField?: string };
-}
-
-export const PieChartNode = ({
-  nodeId,
-  executedData = [],
-  config = {},
-}: PieChartNodeProps) => {
-  const { fields, fieldTypes } = useFieldTypes();
+export const PieChartNode = ({ id, data }: NodeProps<BaseNodeData>) => {
+  const builderCtx = useBuilder();
+  const fields = Object.keys(builderCtx.nodeFieldsTypeMap || {});
   const { setNodes } = useReactFlow();
+  const config = data.config || {};
+
   const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
-  const [numberFields, setNumberFields] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
 
-  const actualData = useMemo(() => {
-    const nodeResult = executedData.find((d) => d.node_id === nodeId);
-    return nodeResult?.output || [];
-  }, [executedData, nodeId]);
+  const actualData = useMemo(
+    () => data.executionData || [],
+    [data.executionData]
+  );
 
-  // Infer numeric fields from context and initialize yField only once
+  // Initialize numeric field once
   useEffect(() => {
-    // const numFields = fields.filter((f) => fieldTypes[f] === "number");
-    // setNumberFields(numFields);
-    
-    // Only set initial value if not already initialized
-    if (!initialized && !yField && fields.length > 0) {
-      const initialField = config.yField || fields[0] || fields[0] || "";
-      setYField(initialField);
+    if (!initialized && fields.length > 0) {
+      setYField(config.yField || fields[0]);
       setInitialized(true);
     }
-  }, [fields, fieldTypes, config.yField, initialized, yField]);
+  }, [fields, config.yField, initialized]);
 
-  // Save yField to node config when it changes
+  // Sync yField to node config
   useEffect(() => {
     if (!yField) return;
-    
     setNodes((nds) =>
       nds.map((n) =>
-        n.id === nodeId
+        n.id === id
           ? {
               ...n,
-              config: { yField },
               data: {
                 ...n.data,
+                config: { ...(n.data?.config || {}), yField },
               },
             }
           : n
       )
     );
-  }, [yField, nodeId, setNodes]);
+  }, [yField, id, setNodes]);
 
-  // Map chart data and convert to percentages
+  // Map data for Pie chart
   useEffect(() => {
     if (!yField) return;
-
     const values = actualData.map((row: any) => row[yField] ?? 0);
-    const total = values.reduce((acc: any, v: any) => acc + v, 0);
+    const total = values.reduce((acc: number, v: number) => acc + v, 0);
 
-    const mapped = values.map((v: any, i: any) => ({
-      name: (i + 1).toString(), // index as label
+    const mapped = values.map((v: number, i: number) => ({
+      name: (i + 1).toString(),
       value: total ? (v / total) * 100 : 0,
     }));
 
@@ -99,20 +85,22 @@ export const PieChartNode = ({
       className="border-t-purple-600"
     >
       {/* Y-axis selector */}
-      <div>
-        <label className="block mb-1 text-gray-600">Values</label>
-        <select
-          value={yField}
-          onChange={(e) => setYField(e.target.value)}
-          className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
-        >
-          {fields.map((f) => (
-            <option key={f} value={f}>
-              {f}
-            </option>
-          ))}
-        </select>
-      </div>
+      {fields.length > 0 && (
+        <div>
+          <label className="block mb-1 text-gray-600 text-[10px]">Values</label>
+          <select
+            value={yField}
+            onChange={(e) => setYField(e.target.value)}
+            className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
+          >
+            {fields.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Pie Chart */}
       {hasData ? (
