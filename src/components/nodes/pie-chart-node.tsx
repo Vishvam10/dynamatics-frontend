@@ -21,11 +21,14 @@ const COLORS = [
 
 export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
   const builderCtx = useBuilder();
-  const fields = Object.keys(builderCtx.nodeFieldsTypeMap || {});
+  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
   const { setNodes } = useReactFlow();
 
   const { id, data } = props;
   const config = data.config || {};
+
+  // Only use numeric fields for this node
+  const fields = Object.keys(nodeFieldTypeMap?.[id] || {});
 
   const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
@@ -86,7 +89,7 @@ export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
       outputs={0}
       className="border-t-purple-600"
     >
-      {/* Y-axis selector */}
+      {/* Values selector */}
       {fields.length > 0 && (
         <div>
           <label className="block mb-1 text-gray-600 text-[10px]">Values</label>

@@ -25,14 +25,13 @@ export function BaseNode({
     <div
       className={cn(
         "relative text-xs rounded-lg bg-white shadow-sm flex flex-col min-w-32 border border-gray-200",
-        "h-auto", // 🔹 allow it to grow freely
+        "h-auto",
         className
       )}
       style={{
         borderTop: `4px solid ${color}`,
       }}
     >
-
       {/* Input Handles */}
       {Array.from({ length: inputs }).map((_, i) => (
         <Handle

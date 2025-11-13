@@ -17,7 +17,9 @@ export const LineChartNode = (props: NodeProps<BaseNodeData>) => {
 
   const { id, data } = props;
   const config = data.config || {};
-  const fields = Object.keys(nodeFieldTypeMap || {});
+
+  // Only use fields allowed for this node
+  const fields = Object.keys(nodeFieldTypeMap?.[id] || {});
 
   const [xField, setXField] = useState(config.xField || "");
   const [yField, setYField] = useState(config.yField || "");

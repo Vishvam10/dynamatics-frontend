@@ -13,6 +13,8 @@ export const SortNode = (props: NodeProps<BaseNodeData>) => {
   const [field, setField] = useState(data.config?.field || "");
   const [asc, setAsc] = useState(data.config?.asc ?? true);
 
+  const fieldOptions = Object.keys(nodeFieldTypeMap?.[id] || {});
+
   useEffect(() => {
     setNodes((nds) =>
       nds.map((n) => {
@@ -38,7 +40,7 @@ export const SortNode = (props: NodeProps<BaseNodeData>) => {
         className="w-full border rounded p-1 text-xs"
       >
         <option value="">Select field</option>
-        {Object.keys(nodeFieldTypeMap || {}).map((f) => (
+        {fieldOptions.map((f) => (
           <option key={f} value={f}>
             {f}
           </option>

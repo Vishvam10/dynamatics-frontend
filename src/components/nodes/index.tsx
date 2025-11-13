@@ -1,4 +1,3 @@
-import { DataSourceNode } from "./data-source-node";
 import { ExampleDataNode } from "./example-data-node";
 
 import { FilterNode } from "./filter-node";
@@ -14,7 +13,6 @@ import { PieChartNode } from "./pie-chart-node";
 import { ViewDataNode } from "./view-data-node";
 
 export {
-  DataSourceNode,
   ExampleDataNode,
 
   FilterNode,

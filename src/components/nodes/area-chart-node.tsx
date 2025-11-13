@@ -12,11 +12,14 @@ import { BaseNode } from "./base-node";
 
 export const AreaChartNode = (props: NodeProps<BaseNodeData>) => {
   const builderCtx = useBuilder();
-  const fields = Object.keys(builderCtx.nodeFieldsTypeMap || {});
+  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
   const { setNodes } = useReactFlow();
 
   const { id, data } = props;
   const config = data.config || {};
+
+  // Only use fields for this node
+  const fields = Object.keys(nodeFieldTypeMap?.[id] || {});
 
   const [xField, setXField] = useState(config.xField || "");
   const [yField, setYField] = useState(config.yField || "");

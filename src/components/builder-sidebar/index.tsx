@@ -4,13 +4,6 @@ import { nodeColors } from "@/utils/node-colours";
 const sidebarNodes = [
   // --- Data ---
   {
-    type: "dataSource",
-    label: "Data Source",
-    category: "Connector",
-    input: "None",
-    output: "Dataset",
-  },
-  {
     type: "exampleData",
     label: "Example Data",
     category: "Data",

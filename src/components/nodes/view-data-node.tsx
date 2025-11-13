@@ -1,18 +1,40 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { BaseNode } from "./base-node";
 import { DataTable } from "@/components/ui/data-table";
 import type { BaseNodeData } from "@/types/node-data";
-import type { NodeProps } from "@xyflow/react";
+import { useReactFlow, type NodeProps } from "@xyflow/react";
 
 export const ViewDataNode = (props: NodeProps<BaseNodeData>) => {
   const { id, data } = props;
   const executedData = data.executionData ?? [];
+
+  console.log(executedData);
+
+  const { setNodes } = useReactFlow();
 
   // Memoize tableData for this node
   const tableData = useMemo(() => {
     const nodeResult = executedData.find((d: any) => d.node_id === id);
     return nodeResult?.output || [];
   }, [executedData, id]);
+
+  // Ensure config and metadata exist
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === id
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                config: { ...(n.data?.config ?? {}) },
+                metadata: { ...(n.data?.metadata ?? {}) },
+              },
+            }
+          : n
+      )
+    );
+  }, [id]);
 
   return (
     <BaseNode title="View Data" typeLabel="Export" inputs={1} outputs={0}>

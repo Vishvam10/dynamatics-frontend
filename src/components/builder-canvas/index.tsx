@@ -28,7 +28,6 @@ import {
 
 import {
   // Data Nodes
-  DataSourceNode,
   ExampleDataNode,
 
   // Aggregate Nodes
@@ -63,7 +62,7 @@ export function BuilderCanvas() {
   const { flow_uid } = useParams<{ flow_uid: string }>();
   const reactFlowInstance = useReactFlow();
 
-  const { executedFlowData, setExecutedFlowData, nodeFieldsTypeMap } =
+  const { setExecutedFlowData, nodeFieldsTypeMap, setNodeFieldsTypeMap } =
     useBuilder();
 
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -84,7 +83,6 @@ export function BuilderCanvas() {
       group: GroupNode,
       merge: MergeNode,
       exampleData: ExampleDataNode,
-      dataSource: DataSourceNode,
       export: ViewDataNode,
       pieChart: PieChartNode,
       barChart: BarChartNode,
@@ -150,11 +148,11 @@ export function BuilderCanvas() {
       setEdges((eds) => applyEdgeChanges(changes, eds)),
     []
   );
-  const onConnect = useCallback(
-    (connection: Connection) =>
-      setEdges((eds) => addEdge({ ...connection, animated: true }, eds)),
-    []
-  );
+
+  const onConnect = useCallback((connection: Connection) => {
+    setEdges((eds) => addEdge({ ...connection, animated: true }, eds));
+  }, []);
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -256,11 +254,21 @@ export function BuilderCanvas() {
       });
       if (!res.ok) throw new Error(`Execution failed: ${res.statusText}`);
       const result = await res.json();
-      if (result.status === "success") setExecutedFlowData(result.data);
+      if (result.status === "success") {
+        setExecutedFlowData(result.data);
+
+        // --- Update nodes with executionData ---
+        setNodes((nds) =>
+          nds.map((n) => ({
+            ...n,
+            data: { ...n.data, executionData: result.data },
+          }))
+        );
+      }
     } catch (err) {
       console.error("Failed to run flow:", err);
     }
-  }, [reactFlowInstance, flowName, setExecutedFlowData]);
+  }, [reactFlowInstance, flowName, setExecutedFlowData, setNodes]);
 
   if (loading) return <div>Loading...</div>;
 

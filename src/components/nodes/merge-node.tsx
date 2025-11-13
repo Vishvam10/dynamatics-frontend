@@ -37,7 +37,8 @@ export const MergeNode = (props: NodeProps<BaseNodeData>) => {
     );
   }, [mergeType, mergeField, id, setNodes]);
 
-  const fieldOptions = Object.keys(nodeFieldTypeMap || {});
+  // Only use fields allowed for this node
+  const fieldOptions = Object.keys(nodeFieldTypeMap?.[id] || {});
 
   return (
     <BaseNode title="Merge" typeLabel="Transform" inputs={2} outputs={1}>

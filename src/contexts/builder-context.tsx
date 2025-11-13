@@ -1,13 +1,8 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useMemo,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 interface BuilderContextType {
   nodeFieldsTypeMap: Record<string, any>;
+  setNodeFieldsTypeMap: (map: Record<string, any>) => void;
   executedFlowData: any[];
   setExecutedFlowData: (data: any[]) => void;
   flowName: string;
@@ -26,16 +21,15 @@ export const useBuilder = () => {
 export const BuilderProvider = ({ children }: { children: ReactNode }) => {
   const [executedFlowData, setExecutedFlowData] = useState<any[]>([]);
   const [flowName, setFlowName] = useState("");
-
-  const nodeFieldsTypeMap = useMemo(
-    () => [{ name: "field1" }, { name: "field2" }],
-    []
-  );
+  const [nodeFieldsTypeMap, setNodeFieldsTypeMap] = useState<
+    Record<string, any>
+  >({});
 
   return (
     <BuilderContext.Provider
       value={{
         nodeFieldsTypeMap,
+        setNodeFieldsTypeMap,
         executedFlowData,
         setExecutedFlowData,
         flowName,

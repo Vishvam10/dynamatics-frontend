@@ -33,6 +33,8 @@ export const GroupNode = (props: NodeProps<BaseNodeData>) => {
     data.config?.fields ?? []
   );
 
+  const fieldOptions = Object.keys(nodeFieldTypeMap?.[id] || {});
+
   // Sync with top-level node config
   useEffect(() => {
     setNodes((nds) =>
@@ -120,8 +122,6 @@ export const GroupNode = (props: NodeProps<BaseNodeData>) => {
       </div>
     </div>
   );
-
-  const fieldOptions = Object.keys(nodeFieldTypeMap || {});
 
   return (
     <BaseNode title="Group" typeLabel="Aggregate">

@@ -33,7 +33,9 @@ export const FilterNode = (props: NodeProps<BaseNodeData>) => {
     setRule((prev) => ({ ...prev, [key]: value }));
   };
 
-  const getType = (field: string) => nodeFieldTypeMap?.[field] ?? "string";
+  // Get type for this node's field
+  const getType = (field: string) =>
+    nodeFieldTypeMap?.[id]?.[field] ?? "string";
 
   // Sync single rule to React Flow node
   useEffect(() => {
@@ -64,7 +66,7 @@ export const FilterNode = (props: NodeProps<BaseNodeData>) => {
           onChange={(e) => updateRule("field", e.target.value)}
         >
           <option value="">Field</option>
-          {Object.keys(nodeFieldTypeMap || {}).map((f) => (
+          {Object.keys(nodeFieldTypeMap?.[id] || {}).map((f) => (
             <option key={f} value={f}>
               {f}
             </option>
