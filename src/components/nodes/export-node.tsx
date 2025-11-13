@@ -11,7 +11,7 @@ interface ExportNodeProps {
   };
 }
 
-export const ExportDataNode = ({ id, executedData = [] }: ExportNodeProps) => {
+export const ViewDataNode = ({ id, executedData = [] }: ExportNodeProps) => {
   const [format, setFormat] = useState("CSV");
   const [tableData, setTableData] = useState<any[]>([]);
 
@@ -22,9 +22,9 @@ export const ExportDataNode = ({ id, executedData = [] }: ExportNodeProps) => {
   }, [executedData, id]);
 
   return (
-    <BaseNode title="Export Data" typeLabel="Export" inputs={1} outputs={0}>
+    <BaseNode title="View Data" typeLabel="Export" inputs={1} outputs={0}>
       <div className="space-y-2 text-[10px] w-full min-w-[500px]">
-        <label className="block text-[10px]">File Format</label>
+        {/* <label className="block text-[10px]">File Format</label>
         <select
           value={format}
           onChange={(e) => setFormat(e.target.value)}
@@ -32,7 +32,7 @@ export const ExportDataNode = ({ id, executedData = [] }: ExportNodeProps) => {
         >
           <option>CSV</option>
           <option>JSON</option>
-        </select>
+        </select> */}
 
         {tableData.length > 0 ? (
           <DataTable data={tableData} pageSize={10} />

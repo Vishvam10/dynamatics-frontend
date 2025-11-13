@@ -51,7 +51,7 @@ const sidebarNodes = [
   // --- Export ---
   {
     type: "export",
-    label: "Export Data",
+    label: "View Data",
     category: "Export",
     input: "Dataset",
     output: "None",

@@ -95,6 +95,7 @@ export const ExampleDataNode = ({ id, config }: any) => {
         <option value="brandkit">Brandkit</option>
         <option value="automate">Automate</option>
         <option value="launch">Launch</option>
+        <option value="cms">CMS</option>
         <option value="test">Test</option>
       </select>
     </BaseNode>

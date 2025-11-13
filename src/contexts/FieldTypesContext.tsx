@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from "react";
+import { createContext, useContext, useState, type ReactNode, useCallback, useMemo } from "react";
 
 // Default fallback values
 const defaultFields = ["id", "name", "age", "country", "salary"];

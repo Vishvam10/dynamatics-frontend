@@ -35,7 +35,7 @@ import {
   SortNode,
 } from "@/components/nodes";
 import { BuilderSidebar } from "@/components/builder-sidebar";
-import { ExportDataNode } from "@/components/nodes/export-node";
+import { ViewDataNode } from "@/components/nodes/export-node";
 import { PieChartNode } from "@/components/nodes/pie-chart-node";
 import { BarChartNode } from "@/components/nodes/bar-chart-node";
 import { LineChartNode } from "@/components/nodes/line-chart-node";
@@ -80,7 +80,7 @@ function BuilderCanvas() {
       exampleData: ExampleDataNode,
       dataSource: DataSourceNode,
       export: (props: any) => (
-        <ExportDataNode {...props} executedData={executedFlowData} />
+        <ViewDataNode {...props} executedData={executedFlowData} />
       ),
       pieChart: (props: any) => (
         <PieChartNode

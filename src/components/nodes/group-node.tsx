@@ -12,7 +12,6 @@ const AGGREGATES = [
   "max",
   "std",
   "var",
-  "count",
   "nunique",
   "median",
 ];
