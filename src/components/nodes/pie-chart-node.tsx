@@ -88,6 +88,9 @@ export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
       inputs={1}
       outputs={0}
       className="border-t-purple-600"
+      showSaveButton={true}
+      saveTooltipMessage={"Add to dashboard"}
+      saveOnVisNodeType="pie-chart"
     >
       {/* Values selector */}
       {fields.length > 0 && (

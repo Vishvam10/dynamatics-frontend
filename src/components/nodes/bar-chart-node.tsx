@@ -74,6 +74,9 @@ export const BarChartNode = (props: NodeProps<BaseNodeData>) => {
       inputs={1}
       outputs={0}
       className="border-t-green-600"
+      showSaveButton={true}
+      saveTooltipMessage={"Add to dashboard"}
+      saveOnVisNodeType="bar-chart"
     >
       {/* X-axis selector */}
       {fields.length > 0 && (

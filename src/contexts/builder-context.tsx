@@ -1,30 +1,23 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-interface BuilderContextType {
+interface BuilderContextValue {
   nodeFieldsTypeMap: Record<string, any>;
   setNodeFieldsTypeMap: (map: Record<string, any>) => void;
   executedFlowData: any[];
   setExecutedFlowData: (data: any[]) => void;
-  flowName: string;
-  setFlowName: (name: string) => void;
+  flowUid: string;
+  setFlowUid: (uid: string) => void;
 }
 
-const BuilderContext = createContext<BuilderContextType | null>(null);
-
-export const useBuilder = () => {
-  const context = useContext(BuilderContext);
-  if (!context)
-    throw new Error("useBuilder must be used within BuilderProvider");
-  return context;
-};
+const BuilderContext = createContext<BuilderContextValue | undefined>(
+  undefined
+);
 
 export const BuilderProvider = ({ children }: { children: ReactNode }) => {
+  const [nodeFieldsTypeMap, setNodeFieldsTypeMap] = useState({});
   const [executedFlowData, setExecutedFlowData] = useState<any[]>([]);
-  const [flowName, setFlowName] = useState("");
-  const [nodeFieldsTypeMap, setNodeFieldsTypeMap] = useState<
-    Record<string, any>
-  >({});
-
+  const [flowUid, setFlowUid] = useState<string>("");
+  
   return (
     <BuilderContext.Provider
       value={{
@@ -32,11 +25,18 @@ export const BuilderProvider = ({ children }: { children: ReactNode }) => {
         setNodeFieldsTypeMap,
         executedFlowData,
         setExecutedFlowData,
-        flowName,
-        setFlowName,
+        flowUid,
+        setFlowUid,
       }}
     >
       {children}
     </BuilderContext.Provider>
   );
+};
+
+export const useBuilder = () => {
+  const context = useContext(BuilderContext);
+  if (!context)
+    throw new Error("useBuilder must be used within BuilderProvider");
+  return context;
 };

@@ -1,6 +1,14 @@
-import { Handle, Position } from "@xyflow/react";
+import { Handle, Position, useReactFlow } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import { nodeColors } from "@/utils/node-colours";
+import { Save } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useBuilder } from "@/contexts/builder-context";
 
 interface BaseNodeProps {
   title: string;
@@ -9,6 +17,10 @@ interface BaseNodeProps {
   inputs?: number;
   outputs?: number;
   className?: string;
+  showSaveButton?: boolean;
+  saveTooltipMessage?: string;
+  saveOnVisNodeType?: string;
+  saveOnVisNodeId?: string;
 }
 
 export function BaseNode({
@@ -18,8 +30,43 @@ export function BaseNode({
   inputs = 1,
   outputs = 1,
   className,
+  showSaveButton = false,
+  saveTooltipMessage = "Save changes",
+  saveOnVisNodeType = "",
+  saveOnVisNodeId = "",
 }: BaseNodeProps) {
   const color = nodeColors[typeLabel] || nodeColors.Default;
+  const { flowUid } = useBuilder();
+  const reactFlowInstance = useReactFlow();
+
+  const onSaveClick = async () => {
+    console.log("REACHED : ", flowUid);
+    if (!reactFlowInstance || !flowUid) return;
+
+    const flow = reactFlowInstance.toObject();
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      const method = "POST";
+      const url = `${apiUrl}/api/flows`;
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          flow_uid: flowUid || `flow_${Date.now()}`,
+          flow_graph: flow,
+          vis_node_type: saveOnVisNodeType,
+          vis_node_id: saveOnVisNodeId,
+          render_in_dashboard: true,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Error: ${res.statusText}`);
+      console.log("Flow saved successfully!");
+    } catch (err) {
+      console.error("Failed to save flow : ", err);
+    }
+  };
 
   return (
     <div
@@ -28,9 +75,7 @@ export function BaseNode({
         "h-auto",
         className
       )}
-      style={{
-        borderTop: `4px solid ${color}`,
-      }}
+      style={{ borderTop: `4px solid ${color}` }}
     >
       {/* Input Handles */}
       {Array.from({ length: inputs }).map((_, i) => (
@@ -73,13 +118,31 @@ export function BaseNode({
       ))}
 
       {/* Header */}
-      <div className="border-b px-2 py-1 bg-white shrink-0">
-        <span className="text-[8px] text-gray-400 uppercase tracking-wide block">
-          {typeLabel}
-        </span>
-        <span className="text-[12px] font-semibold text-gray-800 truncate block">
-          {title}
-        </span>
+      <div className="border-b px-2 py-1 bg-white shrink-0 flex items-center justify-between">
+        <div>
+          <span className="text-[8px] text-gray-400 uppercase tracking-wide block">
+            {typeLabel}
+          </span>
+          <span className="text-[12px] font-semibold text-gray-800 truncate block">
+            {title}
+          </span>
+        </div>
+
+        {showSaveButton && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onSaveClick}
+                  className="p-1 rounded hover:bg-gray-100 disabled:opacity-50 transform transition duration-150 ease-in-out hover:scale-110 hover:-translate-y-0.5 cursor-pointer"
+                >
+                  <Save className="h-4 w-4 text-gray-600" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{saveTooltipMessage}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
 
       {/* Dynamic Content */}

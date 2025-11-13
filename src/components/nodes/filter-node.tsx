@@ -18,44 +18,48 @@ interface Rule {
 }
 
 export const FilterNode = (props: NodeProps<BaseNodeData>) => {
-  const builderCtx = useBuilder();
-  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
-
+  const { nodeFieldsTypeMap } = useBuilder();
   const { id, data } = props;
   const { setNodes } = useReactFlow();
 
-  // Single rule state
+  // State for single rule
   const [rule, setRule] = useState<Rule>(
     data.config?.rules?.[0] ?? { field: "", condition: "", value: "" }
   );
+
+  // Force re-render when the nodeFieldsTypeMap for this node updates
+  const [fieldTypes, setFieldTypes] = useState<Record<string, string>>(
+    nodeFieldsTypeMap[id] || {}
+  );
+  // console.log("filter : ", nodeFieldsTypeMap);
+
+  useEffect(() => {
+    setFieldTypes(nodeFieldsTypeMap[id] || {});
+  }, [nodeFieldsTypeMap, id]);
 
   const updateRule = (key: keyof Rule, value: string | number) => {
     setRule((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Get type for this node's field
-  const getType = (field: string) =>
-    nodeFieldTypeMap?.[id]?.[field] ?? "string";
+  const type = rule.field ? fieldTypes[rule.field] || "string" : "string";
+  const conditions = FILTERS[type] || FILTERS.default;
 
   // Sync single rule to React Flow node
   useEffect(() => {
     setNodes((nds) =>
-      nds.map((n) => {
-        if (n.id !== id) return n;
-        const currentConfig = (n.data?.config as Record<string, any>) || {};
-        return {
-          ...n,
-          data: {
-            ...n.data,
-            config: { ...currentConfig, rules: [rule] },
-          },
-        };
-      })
+      nds.map((n) =>
+        n.id === id
+          ? {
+              ...n,
+              config: { ...(n.data.config || {}), rules: [rule] },
+              data: {
+                ...n.data,
+              },
+            }
+          : n
+      )
     );
   }, [rule, id, setNodes]);
-
-  const type = getType(rule.field);
-  const conditions = FILTERS[type] || FILTERS.default;
 
   return (
     <BaseNode title="Filter" typeLabel="Transform">
@@ -66,7 +70,7 @@ export const FilterNode = (props: NodeProps<BaseNodeData>) => {
           onChange={(e) => updateRule("field", e.target.value)}
         >
           <option value="">Field</option>
-          {Object.keys(nodeFieldTypeMap?.[id] || {}).map((f) => (
+          {Object.keys(fieldTypes).map((f) => (
             <option key={f} value={f}>
               {f}
             </option>

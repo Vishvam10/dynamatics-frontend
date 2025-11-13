@@ -40,6 +40,21 @@ const sidebarNodes = [
     input: "Dataset",
     output: "Dataset",
   },
+  // --- Logical ---
+  {
+    type: "logicalAnd",
+    label: "LogicalAndNode",
+    category: "Logic",
+    input: "Dataset",
+    output: "Dataset",
+  },
+  {
+    type: "logicalOr",
+    label: "LogicalOrNode",
+    category: "Logic",
+    input: "Dataset",
+    output: "Dataset",
+  },
 
   // --- Export ---
   {

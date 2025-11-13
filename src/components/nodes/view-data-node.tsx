@@ -8,8 +8,6 @@ export const ViewDataNode = (props: NodeProps<BaseNodeData>) => {
   const { id, data } = props;
   const executedData = data.executionData ?? [];
 
-  console.log(executedData);
-
   const { setNodes } = useReactFlow();
 
   // Memoize tableData for this node
@@ -37,7 +35,15 @@ export const ViewDataNode = (props: NodeProps<BaseNodeData>) => {
   }, [id]);
 
   return (
-    <BaseNode title="View Data" typeLabel="Export" inputs={1} outputs={0}>
+    <BaseNode
+      title="View Data"
+      typeLabel="Export"
+      inputs={1}
+      outputs={0}
+      showSaveButton={true}
+      saveTooltipMessage={"Add to dashboard"}
+      saveOnVisNodeType="data-table"
+    >
       <div className="space-y-2 text-[10px] w-full min-w-[500px]">
         {tableData.length > 0 ? (
           <DataTable data={tableData} pageSize={10} />

@@ -62,7 +62,7 @@ export function BuilderCanvas() {
   const { flow_uid } = useParams<{ flow_uid: string }>();
   const reactFlowInstance = useReactFlow();
 
-  const { setExecutedFlowData, nodeFieldsTypeMap, setNodeFieldsTypeMap } =
+  const { setExecutedFlowData, setNodeFieldsTypeMap, flowUid, setFlowUid } =
     useBuilder();
 
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -93,18 +93,35 @@ export function BuilderCanvas() {
   );
 
   // -------------------------
-  // Load Flow from API
+  // Load Flow from API or create new flow_uid
   // -------------------------
   useEffect(() => {
-    const fetchFlow = async () => {
+    const initializeFlow = async () => {
       setLoading(true);
+
       try {
-        if (!flow_uid) return;
+        let currentFlowUid = flow_uid;
 
+        // If no flow_uid in URL, generate one
+        if (!currentFlowUid) {
+          currentFlowUid = `flow_${Date.now()}`;
+          setFlowUid(currentFlowUid);
+          setFlowData(null);
+          setNodes([]);
+          setEdges([]);
+          return;
+        }
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-        const res = await fetch(`${apiUrl}/api/flows/${flow_uid}`);
-        if (!res.ok) throw new Error("Flow not found");
+        const res = await fetch(`${apiUrl}/api/flows/${currentFlowUid}`);
 
+        if (!res.ok) {
+          // Flow does not exist yet, create blank flow
+          setFlowUid(currentFlowUid);
+          setFlowData(null);
+          setNodes([]);
+          setEdges([]);
+          return;
+        }
         const data = await res.json();
         const flowGraph = data.data.flow_graph;
         if (!flowGraph) throw new Error("Flow graph not found");
@@ -123,16 +140,17 @@ export function BuilderCanvas() {
           reactFlowInstance.setViewport({ x, y, zoom });
         }
       } catch (err) {
-        console.warn("Flow not found, opening blank builder", err);
+        console.warn("Failed to load flow, initializing blank builder", err);
         setFlowData(null);
         setNodes([]);
         setEdges([]);
-        setFlowName("");
+        setFlowName(`Flow-${Date.now()}`);
       } finally {
         setLoading(false);
       }
     };
-    fetchFlow();
+
+    initializeFlow();
   }, [flow_uid]);
 
   // -------------------------
@@ -160,27 +178,28 @@ export function BuilderCanvas() {
       if (!type || !reactFlowInstance) return;
 
       const bounds = event.currentTarget.getBoundingClientRect();
-      const position = reactFlowInstance?.screenToFlowPosition({
+      const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       });
 
       const nodeId = `${type}-${Date.now()}`;
-
-      // Prepare node data fully
-      const data: BaseNodeData = {
-        nodeId, // important for useNodesData
+      const data: BaseNodeData["data"] = {
+        nodeId,
         config: type === "filter" ? { rules: [] } : {},
         metadata: {},
         executionData: null,
-        fields: [], // for filter, sort, group
-        fieldTypes: nodeFieldsTypeMap, // only for filter, sort, group
-      } as any;
+      };
 
-      const node: Node<BaseNodeData> = { id: nodeId, type, position, data };
+      const node: Node<BaseNodeData["data"]> = {
+        id: nodeId,
+        type,
+        position,
+        data,
+      };
       setNodes((nds) => [...nds, node]);
     },
-    [reactFlowInstance, nodeFieldsTypeMap]
+    [reactFlowInstance, setNodes, setNodeFieldsTypeMap]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -211,8 +230,12 @@ export function BuilderCanvas() {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          flow_name: flowName || `Flow-${Date.now()}`,
+          flow_uid: flowUid || `Flow-${Date.now()}`,
+          flow_name: flowName,
           flow_graph: flow,
+          vis_node_type: null,
+          vis_node_id: null,
+          render_in_dashboard: false,
         }),
       });
 

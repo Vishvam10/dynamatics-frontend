@@ -12,32 +12,111 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 import { Trash } from "lucide-react";
+
+import {
+  LineChart,
+  BarChart,
+  AreaChart,
+  PieChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Line,
+  Bar,
+  Area,
+  Pie,
+  Tooltip,
+} from "recharts";
+import { DataTable } from "@/components/ui/data-table";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [flowName, setFlowName] = useState("");
-  const [flows, setFlows] = useState<{ flow_uid: string; flow_name: string }[]>(
-    []
-  );
+  const [flows, setFlows] = useState<
+    {
+      flow_uid: string;
+      flow_name: string;
+      render_in_dashboard?: boolean;
+    }[]
+  >([]);
+  const [dashboardData, setDashboardData] = useState<
+    {
+      flow_uid: string;
+      flow_name: string;
+      vis_node_id: string;
+      vis_node_type: string;
+      data: any;
+    }[]
+  >([]);
+
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   // Fetch all flows
   const fetchFlows = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
       const res = await fetch(`${apiUrl}/api/flows`);
       const json = await res.json();
-      const mappedFlows = (json.data || []).map((flow: any) => ({
-        flow_uid: flow.flow_uid,
-        flow_name: flow.flow_name || "Unnamed Flow",
-      }));
+
+      // Deduplicate flows by flow_uid for flow list
+      const uniqueFlowsMap = new Map<string, any>();
+      (json.data || []).forEach((flow: any) => {
+        if (!uniqueFlowsMap.has(flow.flow_uid)) {
+          uniqueFlowsMap.set(flow.flow_uid, {
+            flow_uid: flow.flow_uid,
+            flow_name: flow.flow_name || "Unnamed Flow",
+            render_in_dashboard: flow.render_in_dashboard,
+          });
+        }
+      });
+      const mappedFlows = Array.from(uniqueFlowsMap.values());
       setFlows(mappedFlows);
+
+      // Only fetch data for flows with render_in_dashboard
+      const dashboardFlows = mappedFlows.filter((f) => f.render_in_dashboard);
+      fetchDashboardData(dashboardFlows);
     } catch (err) {
       console.error("Failed to fetch flows:", err);
     }
+  };
+  const fetchDashboardData = async (flowsToRender: typeof flows) => {
+    const results: typeof dashboardData = [];
+    for (const flow of flowsToRender) {
+      try {
+        const res = await fetch(`${apiUrl}/api/flows/execute/${flow.flow_uid}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const json = await res.json();
+
+        // json.data is expected to be { [vis_node_id: string]: { type: string; 
+        // data: any } }
+        const dataNodes = json.data as Record<
+          string,
+          { type: string; data: any }
+        >;
+
+        for (const [vis_node_id, visNode] of Object.entries(dataNodes || {})) {
+          if (visNode.type && visNode.data) {
+            results.push({
+              flow_uid: flow.flow_uid,
+              flow_name: flow.flow_name,
+              vis_node_id,
+              vis_node_type: visNode.type,
+              data: visNode.data,
+            });
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to fetch data for flow ${flow.flow_uid}:`, err);
+      }
+    }
+    setDashboardData(results);
   };
 
   useEffect(() => {
@@ -50,14 +129,13 @@ export default function Dashboard() {
     if (!confirm("Are you sure you want to delete this flow?")) return;
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
       const res = await fetch(`${apiUrl}/api/flows/${flow_uid}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete flow");
 
-      // Remove from UI
       setFlows((prev) => prev.filter((f) => f.flow_uid !== flow_uid));
+      setDashboardData((prev) => prev.filter((d) => d.flow_uid !== flow_uid));
     } catch (err) {
       console.error("Failed to delete flow:", err);
       alert("Failed to delete flow");
@@ -68,9 +146,96 @@ export default function Dashboard() {
     <div className="flex h-full">
       <DashboardSidebar />
       <main className="flex-1 p-8 bg-gray-50 dark:bg-gray-950 overflow-y-auto">
-        {/* Analytics Dashboard */}
-        <div className="mb-12">
-          <AnalyticsDashboard />
+        {/* Dashboard Charts */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+          {dashboardData.map((d) => {
+            let chartElement: React.ReactElement | null = null;
+
+            switch (d.vis_node_type) {
+              case "line-chart":
+                chartElement = (
+                  <LineChart width={300} height={150} data={d.data}>
+                    <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip content={<ChartTooltipContent hideLabel />} />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#9f7aea"
+                      strokeWidth={2}
+                      dot={{ r: 2 }}
+                    />
+                  </LineChart>
+                );
+                break;
+              case "bar-chart":
+                chartElement = (
+                  <BarChart width={300} height={150} data={d.data}>
+                    <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip content={<ChartTooltipContent hideLabel />} />
+                    <Bar dataKey="value" fill="#9f7aea" />
+                  </BarChart>
+                );
+                break;
+              case "area-chart":
+                chartElement = (
+                  <AreaChart width={300} height={150} data={d.data}>
+                    <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip content={<ChartTooltipContent hideLabel />} />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#9f7aea"
+                      fill="#e9d5ff"
+                    />
+                  </AreaChart>
+                );
+                break;
+              case "pie-chart":
+                chartElement = (
+                  <PieChart width={300} height={150}>
+                    <Pie
+                      data={d.data}
+                      dataKey="value"
+                      nameKey="name"
+                      fill="#9f7aea"
+                    />
+                    <Tooltip content={<ChartTooltipContent hideLabel />} />
+                  </PieChart>
+                );
+                break;
+              case "data-table":
+                chartElement = <DataTable data={d.data} />;
+                break;
+              default:
+                chartElement = null;
+            }
+
+            if (!chartElement) return null;
+
+            return (
+              <Card
+                key={d.vis_node_id}
+                className="p-4 border-violet-100 dark:border-gray-800 hover:shadow-md transition"
+              >
+                <h2 className="font-medium text-gray-800 dark:text-gray-100 mb-2 text-sm truncate">
+                  {d.flow_name}:{d.vis_node_type}
+                </h2>
+
+                <ChartContainer
+                  config={{ value: { label: "Value (%)", color: "#9f7aea" } }}
+                  className="w-full h-48"
+                >
+                  {chartElement}
+                </ChartContainer>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Header */}
@@ -83,8 +248,8 @@ export default function Dashboard() {
           </p>
         </div>
 
+        {/* Flows List */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {/* Existing flows */}
           {flows.map((flow) => (
             <Card
               key={flow.flow_uid}
@@ -102,7 +267,6 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              {/* Trash icon */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -113,7 +277,7 @@ export default function Dashboard() {
             </Card>
           ))}
 
-          {/* Create Flow card */}
+          {/* Create Flow Card */}
           <Card className="flex flex-row items-center gap-3 text-left p-4 border-dashed border-2 border-violet-300 dark:border-violet-700 hover:border-violet-500 transition cursor-pointer">
             <div className="flex flex-1 flex-col gap-2">
               <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
