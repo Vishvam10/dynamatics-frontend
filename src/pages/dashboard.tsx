@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -50,8 +51,13 @@ export default function Dashboard() {
     <div className="flex h-full">
       <DashboardSidebar />
       <main className="flex-1 p-8 bg-gray-50 dark:bg-gray-950 overflow-y-auto">
+        {/* Analytics Dashboard */}
+        <div className="mb-8">
+          <AnalyticsDashboard />
+        </div>
+
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 mt-12">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             Your Flows
           </h1>
