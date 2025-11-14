@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useBuilder } from "@/contexts/builder-context";
+import { ShineBorder } from "../ui/shine-border";
 
 interface BaseNodeProps {
   title: string;
@@ -40,17 +41,15 @@ export function BaseNode({
   const reactFlowInstance = useReactFlow();
 
   const onSaveClick = async () => {
-    console.log("REACHED : ", flowUid);
     if (!reactFlowInstance || !flowUid) return;
 
     const flow = reactFlowInstance.toObject();
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-      const method = "POST";
       const url = `${apiUrl}/api/flows`;
 
       const res = await fetch(url, {
-        method,
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           flow_uid: flowUid || `flow_${Date.now()}`,
@@ -64,19 +63,13 @@ export function BaseNode({
       if (!res.ok) throw new Error(`Error: ${res.statusText}`);
       console.log("Flow saved successfully!");
     } catch (err) {
-      console.error("Failed to save flow : ", err);
+      console.error("Failed to save flow:", err);
     }
   };
 
-  return (
-    <div
-      className={cn(
-        "relative text-xs rounded-lg bg-white shadow-sm flex flex-col min-w-32 border border-gray-200",
-        "h-auto",
-        className
-      )}
-      style={{ borderTop: `4px solid ${color}` }}
-    >
+  // Node inner content (handles, header, children)
+  const NodeContent = (
+    <>
       {/* Input Handles */}
       {Array.from({ length: inputs }).map((_, i) => (
         <Handle
@@ -151,6 +144,34 @@ export function BaseNode({
           {children}
         </div>
       )}
+    </>
+  );
+
+  // Render shiny border for MachineLearning nodes, otherwise normal card
+  return typeLabel === "Machine Learning" ? (
+    <div
+      className={cn(
+        "relative text-xs rounded-lg bg-white shadow-sm flex flex-col min-w-32"
+      )}
+    >
+      <ShineBorder
+        duration={12}
+        borderWidth={3}
+        shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B",]}
+        topOnly={true}
+      ></ShineBorder>
+      {NodeContent}
+    </div>
+  ) : (
+    <div
+      className={cn(
+        "relative text-xs rounded-lg bg-white shadow-sm flex flex-col min-w-32 border border-gray-200",
+        "h-auto",
+        className
+      )}
+      style={{ borderTop: `4px solid ${color}` }}
+    >
+      {NodeContent}
     </div>
   );
 }

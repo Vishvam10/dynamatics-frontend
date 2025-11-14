@@ -17,10 +17,10 @@ export const ExampleDataNode = (props: NodeProps<BaseNodeData>) => {
   const config: ExampleDataNodeConfig = data?.config ?? {};
   const [dataset, setDataset] = useState(config.input || "");
 
-  // We want to refresh the allowed fields on dataset change as well
   const fetchDatasetMetadata = useCallback(
     async (dataset: string) => {
       if (!dataset) {
+        // Clear metadata if no dataset
         setNodes((nds) =>
           nds.map((n) =>
             n.id === id ? { ...n, data: { ...n.data, metadata: {} } } : n
@@ -33,6 +33,24 @@ export const ExampleDataNode = (props: NodeProps<BaseNodeData>) => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
         if (!reactFlowInstance) return;
+
+        // 1. Update this node's config.input immediately
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === id
+              ? {
+                  ...n,
+                  config: { ...(n.data?.config ?? {}), input: dataset },
+                  data: {
+                    ...n.data,
+                  },
+                }
+              : n
+          )
+        );
+
+        // 2. Wait a tick so reactFlowInstance.toObject() sees the updated config
+        await new Promise((r) => setTimeout(r, 0));
 
         const flow = reactFlowInstance.toObject();
 
@@ -75,7 +93,6 @@ export const ExampleDataNode = (props: NodeProps<BaseNodeData>) => {
         const newNodeFieldsTypeMap: Record<string, Record<string, string>> = {};
 
         metadata.data.forEach((node: any) => {
-          console.log("debug : ", node);
           const allowedFields = node.allowed_fields || {};
           const nodeFieldTypes: Record<string, string> = {};
 
@@ -86,7 +103,6 @@ export const ExampleDataNode = (props: NodeProps<BaseNodeData>) => {
 
           newNodeFieldsTypeMap[node.node_id] = nodeFieldTypes;
 
-          // Update metadata for this node specifically
           if (node.node_id === id) {
             setNodes((nds) =>
               nds.map((n) =>
@@ -116,22 +132,8 @@ export const ExampleDataNode = (props: NodeProps<BaseNodeData>) => {
   );
 
   useEffect(() => {
-    setNodes((nds) =>
-      nds.map((n) =>
-        n.id === id
-          ? {
-              ...n,
-              config: { ...(n.data?.config ?? {}), input: dataset },
-              data: {
-                ...n.data,
-              },
-            }
-          : n
-      )
-    );
-
     fetchDatasetMetadata(dataset);
-  }, [dataset, id, fetchDatasetMetadata, setNodes]);
+  }, [dataset, fetchDatasetMetadata]);
 
   return (
     <BaseNode

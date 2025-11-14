@@ -23,9 +23,9 @@ export const SortNode = (props: NodeProps<BaseNodeData>) => {
         const currentData = n.data || {};
         return {
           ...n,
+          config: { ...currentConfig, field, asc },
           data: {
             ...currentData,
-            config: { ...currentConfig, field, asc },
           },
         };
       })

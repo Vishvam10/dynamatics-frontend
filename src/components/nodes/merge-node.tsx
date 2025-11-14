@@ -12,33 +12,49 @@ export const MergeNode = (props: NodeProps<BaseNodeData>) => {
   const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
   const { setNodes } = useReactFlow();
 
-  const [mergeType, setMergeType] = useState(data.config?.mergeType || "inner");
-  const [mergeField, setMergeField] = useState(data.config?.mergeField || "");
+  // Default mergeType
+  const [mergeType, setMergeType] = useState(data.config?.how || "inner");
 
-  // Sync to node config
+  // Default left/right fields
+  const leftInitial =
+    data.config?.leftField || Object.keys(nodeFieldTypeMap[id] || {})[0] || "";
+  const rightInitial =
+    data.config?.rightField || Object.keys(nodeFieldTypeMap[id] || {})[0] || "";
+
+  const [leftField, setLeftField] = useState(leftInitial);
+  const [rightField, setRightField] = useState(rightInitial);
+
+  // Update field options when nodeFieldTypeMap changes
+  const [fieldOptions, setFieldOptions] = useState<string[]>(
+    Object.keys(nodeFieldTypeMap[id] || {})
+  );
+  useEffect(() => {
+    const newOptions = Object.keys(nodeFieldTypeMap[id] || {});
+    setFieldOptions(newOptions);
+
+    if (!newOptions.includes(leftField)) setLeftField(newOptions[0] || "");
+    if (!newOptions.includes(rightField)) setRightField(newOptions[0] || "");
+  }, [nodeFieldTypeMap, id]);
+
+  // Sync config to React Flow node
   useEffect(() => {
     setNodes((nds) =>
-      nds.map((n) => {
-        if (n.id !== id) return n;
-        const currentData = n.data || {};
-        const currentConfig = (n.data?.config as Record<string, any>) || {};
-        return {
-          ...n,
-          data: {
-            ...currentData,
-            config: {
-              ...currentConfig,
-              mergeType,
-              mergeField,
-            },
-          },
-        };
-      })
+      nds.map((n) =>
+        n.id === id
+          ? {
+              ...n,
+              config: {
+                ...(n.data?.config || {}),
+                how: mergeType,
+                left_on: (leftField === "") ? null : leftField.replace("_x", ""),
+                right_on: (rightField === "") ? null : rightField.replace("_y", ""),
+              },
+              data: { ...n.data },
+            }
+          : n
+      )
     );
-  }, [mergeType, mergeField, id, setNodes]);
-
-  // Only use fields allowed for this node
-  const fieldOptions = Object.keys(nodeFieldTypeMap?.[id] || {});
+  }, [mergeType, leftField, rightField, id, setNodes]);
 
   return (
     <BaseNode title="Merge" typeLabel="Transform" inputs={2} outputs={1}>
@@ -58,15 +74,32 @@ export const MergeNode = (props: NodeProps<BaseNodeData>) => {
         </select>
       </div>
 
-      {/* Merge On Field */}
+      {/* Left Field */}
       <div className="flex flex-col space-y-1 mt-2">
-        <label className="text-[10px] font-medium">Merge On Field</label>
+        <label className="text-[10px] font-medium">Left Field</label>
         <select
           className="w-full border rounded p-1 text-sm"
-          value={mergeField}
-          onChange={(e) => setMergeField(e.target.value)}
+          value={leftField}
+          onChange={(e) => setLeftField(e.target.value)}
         >
-          <option value="">Select Field</option>
+          <option value="">Select Left Field</option>
+          {fieldOptions.map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Right Field */}
+      <div className="flex flex-col space-y-1 mt-2">
+        <label className="text-[10px] font-medium">Right Field</label>
+        <select
+          className="w-full border rounded p-1 text-sm"
+          value={rightField}
+          onChange={(e) => setRightField(e.target.value)}
+        >
+          <option value="">Select Right Field</option>
           {fieldOptions.map((f) => (
             <option key={f} value={f}>
               {f}

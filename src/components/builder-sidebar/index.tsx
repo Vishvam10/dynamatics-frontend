@@ -55,6 +55,14 @@ const sidebarNodes = [
     input: "Dataset",
     output: "Dataset",
   },
+  // --- Machine Learning ---
+  {
+    type: "anomalyDetection",
+    label: "Anomaly Detection",
+    category: "Machine Learning",
+    input: "Dataset",
+    output: "Dataset",
+  },
 
   // --- Export ---
   {

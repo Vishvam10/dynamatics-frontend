@@ -8,6 +8,8 @@ import { MergeNode } from "./merge-node";
 import { LogicalAndNode } from "./logical-and-node";
 import { LogicalOrNode } from "./logical-or-node";
 
+import { AnomalyDetectionNode } from "./anamoly-detection-node";
+
 import { BarChartNode } from "./bar-chart-node";
 import { LineChartNode } from "./line-chart-node";
 import { AreaChartNode } from "./area-chart-node";
@@ -21,6 +23,7 @@ export {
   SortNode,
   GroupNode,
   MergeNode,
+  AnomalyDetectionNode,
   LogicalAndNode,
   LogicalOrNode,
   BarChartNode,

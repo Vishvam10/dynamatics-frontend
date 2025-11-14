@@ -39,6 +39,9 @@ import {
   LogicalAndNode,
   LogicalOrNode,
 
+  // Machine Learning Nodes
+  AnomalyDetectionNode,
+
   // View Nodes
   ViewDataNode,
 
@@ -54,6 +57,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useBuilder } from "@/contexts/builder-context";
 import type { BaseNodeData } from "@/types/node-data";
+import { sanitizeFlowGraph } from "@/utils/sanitize-flow-graph";
+
+import wowGif from "@/assets/wow.gif";
 
 interface Flow {
   flow_uid: string;
@@ -66,8 +72,12 @@ export function BuilderCanvas() {
   const { flow_uid } = useParams<{ flow_uid: string }>();
   const reactFlowInstance = useReactFlow();
 
-  const { setExecutedFlowData, setNodeFieldsTypeMap, flowUid, setFlowUid } =
+  const { setNodeFieldsTypeMap, setExecutedFlowData, flowUid, setFlowUid } =
     useBuilder();
+
+  const [canvasGifs, setCanvasGifs] = useState<
+    { id: string; x: number; y: number }[]
+  >([]);
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -86,6 +96,7 @@ export function BuilderCanvas() {
       sort: SortNode,
       group: GroupNode,
       merge: MergeNode,
+      anomalyDetection: AnomalyDetectionNode,
       logicalAnd: LogicalAndNode,
       logicalOr: LogicalOrNode,
       exampleData: ExampleDataNode,
@@ -101,6 +112,7 @@ export function BuilderCanvas() {
   // -------------------------
   // Load Flow from API or create new flow_uid
   // -------------------------
+
   useEffect(() => {
     const initializeFlow = async () => {
       setLoading(true);
@@ -159,6 +171,83 @@ export function BuilderCanvas() {
     initializeFlow();
   }, [flow_uid]);
 
+  const fetchAndUpdateNodeMetadata = useCallback(
+    async (nodeId: string) => {
+      if (!reactFlowInstance) return;
+
+      // wait a tick to ensure config is updated
+      await new Promise((r) => setTimeout(r, 0));
+
+      const flow = reactFlowInstance.toObject();
+      const cleanGraph = sanitizeFlowGraph(flow); // removes position/visual info
+
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+      try {
+        const res = await fetch(`${apiUrl}/api/flows/metadata/execute`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flow_graph: cleanGraph }),
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch metadata");
+
+        const metadata = await res.json();
+
+        const typeMap: Record<string, string> = {
+          str: "string",
+          string: "string",
+          number: "number",
+          num: "number",
+          int: "number",
+          float: "number",
+          bool: "boolean",
+          boolean: "boolean",
+          list: "list",
+          array: "list",
+          dict: "dict",
+          date: "date",
+          datetime: "date",
+        };
+
+        metadata.data.forEach((node: any) => {
+          if (node.node_id === nodeId) {
+            const allowedFields = node.allowed_fields || {};
+            const nodeFieldTypes: Record<string, string> = {};
+            Object.keys(allowedFields).forEach((field) => {
+              const apiType = (allowedFields[field] || "str").toLowerCase();
+              nodeFieldTypes[field] = typeMap[apiType] || "string";
+            });
+
+            // Update node metadata
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === nodeId
+                  ? { ...n, data: { ...n.data, metadata: allowedFields } }
+                  : n
+              )
+            );
+
+            // Update builder's field map
+            setNodeFieldsTypeMap((prev: any) => ({
+              ...prev,
+              [nodeId]: nodeFieldTypes,
+            }));
+          }
+        });
+      } catch (err) {
+        console.error("Error fetching metadata for node:", nodeId, err);
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, metadata: {} } } : n
+          )
+        );
+        setNodeFieldsTypeMap((prev: any) => ({ ...prev, [nodeId]: {} }));
+      }
+    },
+    [reactFlowInstance, setNodes, setNodeFieldsTypeMap]
+  );
+
   // -------------------------
   // Node / Edge Callbacks
   // -------------------------
@@ -173,9 +262,14 @@ export function BuilderCanvas() {
     []
   );
 
-  const onConnect = useCallback((connection: Connection) => {
-    setEdges((eds) => addEdge({ ...connection, animated: true }, eds));
-  }, []);
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      setEdges((eds) => addEdge({ ...connection, animated: true }, eds));
+      // Fetch metadata for target node of the connection
+      fetchAndUpdateNodeMetadata(connection.target);
+    },
+    [setEdges, fetchAndUpdateNodeMetadata]
+  );
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -203,9 +297,25 @@ export function BuilderCanvas() {
         position,
         data,
       };
+
       setNodes((nds) => [...nds, node]);
+      // If Machine Learning node, show wow.gif at drop location
+      if (type === "anomalyDetection") {
+        setCanvasGifs((prev) => [
+          ...prev,
+          { id: `gif-${nodeId}`, x: event.clientX - 280, y: event.clientY },
+        ]);
+
+        // Optional: remove GIF after 3s
+        setTimeout(() => {
+          setCanvasGifs((prev) => prev.filter((g) => g.id !== `gif-${nodeId}`));
+        }, 2000);
+      }
+
+      // Fetch metadata for the newly dropped node
+      fetchAndUpdateNodeMetadata(nodeId);
     },
-    [reactFlowInstance, setNodes, setNodeFieldsTypeMap]
+    [reactFlowInstance, setNodes, fetchAndUpdateNodeMetadata]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -337,6 +447,22 @@ export function BuilderCanvas() {
             <ArrowLeft className="h-4 w-4" /> Back
           </Button>
         </Panel>
+
+        {/* Easter egg */}
+        {canvasGifs.map((gif) => (
+          <img
+            key={gif.id}
+            src={wowGif}
+            alt="Wow!"
+            className="absolute w-12 h-12 pointer-events-none animate-bounce"
+            style={{
+              top: gif.y,
+              left: gif.x,
+              height: "8rem",
+              width: "8rem"
+            }}
+          />
+        ))}
 
         <Panel position="top-right" className="space-x-2">
           <Button onClick={openSaveModal}>Save</Button>

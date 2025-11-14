@@ -23,42 +23,61 @@ export const GroupNode = (props: NodeProps<BaseNodeData>) => {
   const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
   const { setNodes } = useReactFlow();
 
-  const [groupByFields, setGroupByFields] = useState<string[]>(
-    data.config?.group_by ?? []
-  );
+  // Initialize with one default field for each category
+  const initialGroupBy = data.config?.group_by?.[0] ?? "";
+  const initialSelectedFields = data.config?.fields?.[0] ?? "";
+
+  const [groupByFields, setGroupByFields] = useState<string[]>([
+    initialGroupBy,
+  ]);
   const [aggregates, setAggregates] = useState<string[]>(
-    data.config?.aggregations ?? []
+    data.config?.aggregations?.[0] ? [data.config.aggregations[0]] : []
   );
-  const [selectedFields, setSelectedFields] = useState<string[]>(
-    data.config?.fields ?? []
+  const [selectedFields, setSelectedFields] = useState<string[]>([
+    initialSelectedFields,
+  ]);
+
+  const [fieldOptions, setFieldOptions] = useState<string[]>(
+    Object.keys(nodeFieldTypeMap?.[id] || {})
   );
 
-  const fieldOptions = Object.keys(nodeFieldTypeMap?.[id] || {});
+  // Update options when metadata changes
+  useEffect(() => {
+    const newOptions = Object.keys(nodeFieldTypeMap?.[id] || {});
+    setFieldOptions(newOptions);
 
-  // Sync with top-level node config
+    // Keep default selections if still valid, else pick first available field
+    setGroupByFields((prev) =>
+      prev.map((f) => (newOptions.includes(f) ? f : newOptions[0] || ""))
+    );
+    setSelectedFields((prev) =>
+      prev.map((f) => (newOptions.includes(f) ? f : newOptions[0] || ""))
+    );
+  }, [nodeFieldTypeMap, id]);
+
+  // Sync config to React Flow
   useEffect(() => {
     setNodes((nds) =>
-      nds.map((n) => {
-        if (n.id !== id) return n;
-        const currentData = n.data || {};
-        const currentConfig = (n.data?.config as Record<string, any>) || {};
-        return {
-          ...n,
-          data: {
-            ...currentData,
-            config: {
-              ...currentConfig,
-              group_by: groupByFields,
-              aggregations: aggregates,
-              fields: selectedFields,
-            },
-          },
-        };
-      })
+      nds.map((n) =>
+        n.id === id
+          ? {
+              ...n,
+              config: {
+                group_by: groupByFields,
+                aggregations: aggregates,
+                fields: selectedFields,
+              },
+              data: {
+                ...n.data,
+              },
+            }
+          : n
+      )
     );
   }, [groupByFields, aggregates, selectedFields, id, setNodes]);
 
-  const addItem = (setter: any, arr: string[]) => setter([...arr, ""]);
+  const addItem = (setter: any, arr: string[], defaultValue: string) =>
+    setter([...arr, defaultValue]);
   const removeItem = (setter: any, arr: string[], idx: number) =>
     setter(arr.filter((_, i) => i !== idx));
   const updateItem = (
@@ -82,7 +101,7 @@ export const GroupNode = (props: NodeProps<BaseNodeData>) => {
       <div className="flex justify-between items-center gap-1">
         <span className="font-medium text-[10px] truncate">{label}</span>
         <button
-          onClick={() => addItem(setter, arr)}
+          onClick={() => addItem(setter, arr, options[0] || "")}
           className="text-purple-600 hover:text-purple-800 shrink-0 w-4 h-4 flex items-center justify-center"
           title={`Add ${label}`}
         >
