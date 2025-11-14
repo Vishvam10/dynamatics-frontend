@@ -3,12 +3,16 @@ import { BaseNode } from "./base-node";
 import { DataTable } from "@/components/ui/data-table";
 import type { BaseNodeData } from "@/types/node-data";
 import { useReactFlow, type NodeProps } from "@xyflow/react";
+import { useBuilder } from "@/contexts/builder-context";
 
 export const ViewDataNode = (props: NodeProps<BaseNodeData>) => {
   const { id, data } = props;
   const executedData = data.executionData ?? [];
 
   const { setNodes } = useReactFlow();
+  const { flowUid } = useBuilder();
+
+  console.log("flowUid in view : ", flowUid);
 
   // Memoize tableData for this node
   const tableData = useMemo(() => {

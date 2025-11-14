@@ -11,29 +11,34 @@ import { useBuilder } from "@/contexts/builder-context";
 import type { BaseNodeData } from "@/types/node-data";
 
 export const BarChartNode = (props: NodeProps<BaseNodeData>) => {
-  const builderCtx = useBuilder();
-  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
+  const { executedFlowData, nodeFieldsTypeMap } = useBuilder();
   const { setNodes } = useReactFlow();
 
   const { id, data } = props;
   const config = data.config || {};
-  // Use only fields allowed for this node
-  const fields = Object.keys(nodeFieldTypeMap?.[id] || {});
+
+  // Only fields allowed for this node
+  const fields = Object.keys(nodeFieldsTypeMap?.[id] || {});
 
   const [xField, setXField] = useState(config.xField || "");
   const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
+  const [initialized, setInitialized] = useState(false);
 
+  // Use executed data from builder
   const actualData = useMemo(
-    () => data.executionData || [],
-    [data.executionData]
+    () => executedFlowData?.find((d) => d.node_id === id)?.output || [],
+    [executedFlowData, id]
   );
 
-  // Initialize default fields if empty
+  // Initialize default fields once
   useEffect(() => {
-    if (!xField && fields.length > 0) setXField(fields[0]);
-    if (!yField && fields.length > 1) setYField(fields[1] || fields[0]);
-  }, [fields, xField, yField]);
+    if (!initialized && fields.length > 0) {
+      setXField(config.xField || fields[0] || "");
+      setYField(config.yField || fields[1] || fields[0] || "");
+      setInitialized(true);
+    }
+  }, [fields, config.xField, config.yField, initialized]);
 
   // Sync xField/yField to node config
   useEffect(() => {
@@ -51,14 +56,14 @@ export const BarChartNode = (props: NodeProps<BaseNodeData>) => {
           : n
       )
     );
-  }, [id, xField, yField, setNodes]);
+  }, [xField, yField, id, setNodes]);
 
   // Map data for chart
   useEffect(() => {
     if (!xField || !yField) return;
 
-    const mapped = actualData.map((row: any) => ({
-      name: row[xField] ?? "Unknown",
+    const mapped = actualData.map((row: any, i: number) => ({
+      name: row[xField] ?? `Item ${i + 1}`,
       value: row[yField] ?? 0,
     }));
 
@@ -74,8 +79,8 @@ export const BarChartNode = (props: NodeProps<BaseNodeData>) => {
       inputs={1}
       outputs={0}
       className="border-t-green-600"
-      showSaveButton={true}
-      saveTooltipMessage={"Add to dashboard"}
+      showSaveButton
+      saveTooltipMessage="Add to dashboard"
       saveOnVisNodeType="bar-chart"
     >
       {/* X-axis selector */}

@@ -11,27 +11,27 @@ import type { BaseNodeData } from "@/types/node-data";
 import { BaseNode } from "./base-node";
 
 export const AreaChartNode = (props: NodeProps<BaseNodeData>) => {
-  const builderCtx = useBuilder();
-  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
+  const { executedFlowData, nodeFieldsTypeMap } = useBuilder();
   const { setNodes } = useReactFlow();
 
   const { id, data } = props;
   const config = data.config || {};
 
-  // Only use fields for this node
-  const fields = Object.keys(nodeFieldTypeMap?.[id] || {});
+  // Available fields for this node
+  const fields = Object.keys(nodeFieldsTypeMap?.[id] || {});
 
   const [xField, setXField] = useState(config.xField || "");
   const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
   const [initialized, setInitialized] = useState(false);
 
+  // Use executed data from builder
   const actualData = useMemo(
-    () => data.executionData || [],
-    [data.executionData]
+    () => executedFlowData?.find((d) => d.node_id === id)?.output || [],
+    [executedFlowData, id]
   );
 
-  // Initialize fields only once
+  // Initialize default fields once
   useEffect(() => {
     if (!initialized && fields.length > 0) {
       setXField(config.xField || fields[0] || "");
@@ -40,9 +40,10 @@ export const AreaChartNode = (props: NodeProps<BaseNodeData>) => {
     }
   }, [fields, config.xField, config.yField, initialized]);
 
-  // Save fields to node config when they change
+  // Sync X/Y fields to node config
   useEffect(() => {
     if (!xField || !yField) return;
+
     setNodes((nds) =>
       nds.map((n) =>
         n.id === id
@@ -79,8 +80,8 @@ export const AreaChartNode = (props: NodeProps<BaseNodeData>) => {
       inputs={1}
       outputs={0}
       className="border-t-purple-600"
-      showSaveButton={true}
-      saveTooltipMessage={"Add to dashboard"}
+      showSaveButton
+      saveTooltipMessage="Add to dashboard"
       saveOnVisNodeType="area-chart"
     >
       {/* X-axis selector */}
@@ -102,7 +103,7 @@ export const AreaChartNode = (props: NodeProps<BaseNodeData>) => {
       )}
 
       {/* Y-axis selector */}
-      <div>
+      <div className="mt-1">
         <label className="block mb-1 text-gray-600 text-[10px]">Y-axis</label>
         <select
           value={yField}

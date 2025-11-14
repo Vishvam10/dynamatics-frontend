@@ -11,23 +11,23 @@ import { useBuilder } from "@/contexts/builder-context";
 import type { BaseNodeData } from "@/types/node-data";
 
 export const LineChartNode = (props: NodeProps<BaseNodeData>) => {
-  const builderCtx = useBuilder();
-  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
+  const { executedFlowData, nodeFieldsTypeMap } = useBuilder();
   const { setNodes } = useReactFlow();
 
   const { id, data } = props;
   const config = data.config || {};
 
-  // Only use fields allowed for this node
-  const fields = Object.keys(nodeFieldTypeMap?.[id] || {});
+  // Available fields for this node from builder
+  const fields = Object.keys(nodeFieldsTypeMap?.[id] || {});
 
   const [xField, setXField] = useState(config.xField || "");
   const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
 
+  // Actual executed data for this node
   const actualData = useMemo(
-    () => data.executionData || [],
-    [data.executionData]
+    () => executedFlowData?.find((d) => d.node_id === id)?.output || [],
+    [executedFlowData, id]
   );
 
   // Initialize default fields if empty
@@ -54,7 +54,7 @@ export const LineChartNode = (props: NodeProps<BaseNodeData>) => {
     );
   }, [id, xField, yField, setNodes]);
 
-  // Map data for chart
+  // Map data for chart (convert to percentages)
   useEffect(() => {
     if (!yField) return;
     const values = actualData.map((row: any) => row[yField] ?? 0);
@@ -77,8 +77,8 @@ export const LineChartNode = (props: NodeProps<BaseNodeData>) => {
       inputs={1}
       outputs={0}
       className="border-t-purple-600"
-      showSaveButton={true}
-      saveTooltipMessage={"Add to dashboard"}
+      showSaveButton
+      saveTooltipMessage="Add to dashboard"
       saveOnVisNodeType="line-chart"
     >
       {/* X-axis selector */}

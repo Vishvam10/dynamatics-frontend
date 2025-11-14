@@ -41,8 +41,11 @@ export default function Dashboard() {
       flow_uid: string;
       flow_name: string;
       render_in_dashboard?: boolean;
+      vis_node_id?: string;
+      vis_node_type?: string;
     }[]
   >([]);
+
   const [dashboardData, setDashboardData] = useState<
     {
       flow_uid: string;
@@ -53,6 +56,7 @@ export default function Dashboard() {
     }[]
   >([]);
 
+  console.log("dashboardData : ", dashboardData);
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   // Fetch all flows
@@ -68,6 +72,8 @@ export default function Dashboard() {
           uniqueFlowsMap.set(flow.flow_uid, {
             flow_uid: flow.flow_uid,
             flow_name: flow.flow_name || "Unnamed Flow",
+            render_node_id: flow.vis_node_type || "",
+            render_node_type: flow.vis_node_type || "",
             render_in_dashboard: flow.render_in_dashboard,
           });
         }
@@ -82,40 +88,39 @@ export default function Dashboard() {
       console.error("Failed to fetch flows:", err);
     }
   };
+
   const fetchDashboardData = async (flowsToRender: typeof flows) => {
     const results: typeof dashboardData = [];
+
     for (const flow of flowsToRender) {
       try {
-        const res = await fetch(`${apiUrl}/api/flows/execute/${flow.flow_uid}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const res = await fetch(
+          `${apiUrl}/api/flows/execute/${flow.flow_uid}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
         const json = await res.json();
 
-        // json.data is expected to be { [vis_node_id: string]: { type: string; 
-        // data: any } }
-        const dataNodes = json.data as Record<
-          string,
-          { type: string; data: any }
-        >;
+        (json.data || []).forEach((node: any) => {
+          if (!flow.vis_node_id || node.node_id !== flow.vis_node_id)
+            return;
 
-        for (const [vis_node_id, visNode] of Object.entries(dataNodes || {})) {
-          if (visNode.type && visNode.data) {
-            results.push({
-              flow_uid: flow.flow_uid,
-              flow_name: flow.flow_name,
-              vis_node_id,
-              vis_node_type: visNode.type,
-              data: visNode.data,
-            });
-          }
-        }
+          results.push({
+            flow_uid: flow.flow_uid,
+            flow_name: flow.flow_name,
+            vis_node_id: node.node_id,
+            vis_node_type:
+              flow.vis_node_type || node.output?.[0]?.type || "data-table",
+            data: node.output || [],
+          });
+        });
       } catch (err) {
         console.error(`Failed to fetch data for flow ${flow.flow_uid}:`, err);
       }
     }
+
     setDashboardData(results);
   };
 
@@ -142,19 +147,39 @@ export default function Dashboard() {
     }
   };
 
+  console.log("dashboardData : ", dashboardData);
+
   return (
     <div className="flex h-full">
       <DashboardSidebar />
       <main className="flex-1 p-8 bg-gray-50 dark:bg-gray-950 overflow-y-auto">
         {/* Dashboard Charts */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+          Flow Outputs
           {dashboardData.map((d) => {
             let chartElement: React.ReactElement | null = null;
+
+            const mappedChartData = (() => {
+              if (!d.data || !Array.isArray(d.data)) return [];
+              const values = d.data.map((row: any) => row.value ?? 0);
+              const total = values.reduce((acc, v) => acc + v, 0);
+
+              const mapped = values.map((v: number, i: number) => ({
+                name: rowName(d.data[i], i),
+                value: total ? (v / total) * 100 : v,
+              }));
+
+              return mapped;
+
+              function rowName(row: any, i: number) {
+                return row.name ?? `Item ${i + 1}`;
+              }
+            })();
 
             switch (d.vis_node_type) {
               case "line-chart":
                 chartElement = (
-                  <LineChart width={300} height={150} data={d.data}>
+                  <LineChart width={300} height={150} data={mappedChartData}>
                     <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
@@ -171,7 +196,7 @@ export default function Dashboard() {
                 break;
               case "bar-chart":
                 chartElement = (
-                  <BarChart width={300} height={150} data={d.data}>
+                  <BarChart width={300} height={150} data={mappedChartData}>
                     <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
@@ -182,7 +207,7 @@ export default function Dashboard() {
                 break;
               case "area-chart":
                 chartElement = (
-                  <AreaChart width={300} height={150} data={d.data}>
+                  <AreaChart width={300} height={150} data={mappedChartData}>
                     <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
@@ -200,10 +225,11 @@ export default function Dashboard() {
                 chartElement = (
                   <PieChart width={300} height={150}>
                     <Pie
-                      data={d.data}
+                      data={mappedChartData}
                       dataKey="value"
                       nameKey="name"
                       fill="#9f7aea"
+                      label={(entry) => `${entry.value.toFixed(1)}%`}
                     />
                     <Tooltip content={<ChartTooltipContent hideLabel />} />
                   </PieChart>

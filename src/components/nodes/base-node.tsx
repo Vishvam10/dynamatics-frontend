@@ -41,6 +41,7 @@ export function BaseNode({
   const reactFlowInstance = useReactFlow();
 
   const onSaveClick = async () => {
+    console.log("REACHED : ", flowUid);
     if (!reactFlowInstance || !flowUid) return;
 
     const flow = reactFlowInstance.toObject();
@@ -48,16 +49,26 @@ export function BaseNode({
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
       const url = `${apiUrl}/api/flows`;
 
+      const payload = {
+        flow_uid: flowUid || `flow_${Date.now()}`,
+        flow_graph: flow,
+        vis_node_type: saveOnVisNodeType,
+        vis_node_id: saveOnVisNodeId,
+        render_in_dashboard: true,
+      };
+
+      console.log(
+        "save : ",
+        payload["flow_uid"],
+        payload["vis_node_type"],
+        payload["vis_node_id"],
+        payload["render_in_dashboard"]
+      );
+
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          flow_uid: flowUid || `flow_${Date.now()}`,
-          flow_graph: flow,
-          vis_node_type: saveOnVisNodeType,
-          vis_node_id: saveOnVisNodeId,
-          render_in_dashboard: true,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error(`Error: ${res.statusText}`);
@@ -157,7 +168,7 @@ export function BaseNode({
       <ShineBorder
         duration={12}
         borderWidth={3}
-        shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B",]}
+        shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]}
         topOnly={true}
       ></ShineBorder>
       {NodeContent}

@@ -20,26 +20,26 @@ const COLORS = [
 ];
 
 export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
-  const builderCtx = useBuilder();
-  const nodeFieldTypeMap = builderCtx.nodeFieldsTypeMap;
+  const { executedFlowData, nodeFieldsTypeMap } = useBuilder();
   const { setNodes } = useReactFlow();
 
   const { id, data } = props;
   const config = data.config || {};
 
-  // Only use numeric fields for this node
-  const fields = Object.keys(nodeFieldTypeMap?.[id] || {});
+  // Numeric fields for this node
+  const fields = Object.keys(nodeFieldsTypeMap?.[id] || {});
 
   const [yField, setYField] = useState(config.yField || "");
   const [chartData, setChartData] = useState<any[]>([]);
   const [initialized, setInitialized] = useState(false);
 
+  // Use executed data from builder
   const actualData = useMemo(
-    () => data.executionData || [],
-    [data.executionData]
+    () => executedFlowData?.find((d) => d.node_id === id)?.output || [],
+    [executedFlowData, id]
   );
 
-  // Initialize numeric field once
+  // Initialize Y field once
   useEffect(() => {
     if (!initialized && fields.length > 0) {
       setYField(config.yField || fields[0]);
@@ -47,7 +47,7 @@ export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
     }
   }, [fields, config.yField, initialized]);
 
-  // Sync yField to node config
+  // Sync Y field to node config
   useEffect(() => {
     if (!yField) return;
     setNodes((nds) =>
@@ -68,6 +68,7 @@ export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
   // Map data for Pie chart
   useEffect(() => {
     if (!yField) return;
+
     const values = actualData.map((row: any) => row[yField] ?? 0);
     const total = values.reduce((acc: number, v: number) => acc + v, 0);
 
@@ -88,8 +89,8 @@ export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
       inputs={1}
       outputs={0}
       className="border-t-purple-600"
-      showSaveButton={true}
-      saveTooltipMessage={"Add to dashboard"}
+      showSaveButton
+      saveTooltipMessage="Add to dashboard"
       saveOnVisNodeType="pie-chart"
     >
       {/* Values selector */}

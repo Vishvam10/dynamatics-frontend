@@ -72,7 +72,7 @@ export function BuilderCanvas() {
   const { flow_uid } = useParams<{ flow_uid: string }>();
   const reactFlowInstance = useReactFlow();
 
-  const { setNodeFieldsTypeMap, setExecutedFlowData, flowUid, setFlowUid } =
+  const { setNodeFieldsTypeMap, setExecutedFlowData, setFlowUid, flowUid } =
     useBuilder();
 
   const [canvasGifs, setCanvasGifs] = useState<
@@ -86,6 +86,8 @@ export function BuilderCanvas() {
   const [loading, setLoading] = useState(true);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [flowName, setFlowName] = useState("");
+
+  console.log("flowUid, flowName : ", flowUid, flowName);
 
   // -------------------------
   // Node Types
@@ -152,6 +154,7 @@ export function BuilderCanvas() {
         setNodes(mappedNodes);
         setEdges(flowGraph.edges || []);
         setFlowName(data.data.flow_name || "");
+        setFlowUid(data.data.flow_uid || "");
 
         if (reactFlowInstance && flowGraph.viewport) {
           const { x = 0, y = 0, zoom = 1 } = flowGraph.viewport;
@@ -162,7 +165,8 @@ export function BuilderCanvas() {
         setFlowData(null);
         setNodes([]);
         setEdges([]);
-        setFlowName(`Flow-${Date.now()}`);
+        setFlowName(`unnamed_flow_${Date.now()}`);
+        setFlowName(`flow_${Date.now()}`);
       } finally {
         setLoading(false);
       }
@@ -346,7 +350,7 @@ export function BuilderCanvas() {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          flow_uid: flowUid || `Flow-${Date.now()}`,
+          flow_uid: flowUid || `flow_${Date.now()}`,
           flow_name: flowName,
           flow_graph: flow,
           vis_node_type: null,
@@ -459,7 +463,7 @@ export function BuilderCanvas() {
               top: gif.y,
               left: gif.x,
               height: "8rem",
-              width: "8rem"
+              width: "8rem",
             }}
           />
         ))}
