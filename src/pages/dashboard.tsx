@@ -102,10 +102,12 @@ export default function Dashboard() {
           }
         );
         const json = await res.json();
+        console.log("data : ", json);
 
         // Filter by vis_node_id to get the specific node's output
         (json.data || []).forEach((node: any) => {
           // Only process the node that matches vis_node_id
+          console.log("vis_node_id : ", flow.vis_node_id);
           if (flow.vis_node_id && node.node_id === flow.vis_node_id) {
             results.push({
               flow_uid: flow.flow_uid,
@@ -120,6 +122,8 @@ export default function Dashboard() {
         console.error(`Failed to fetch data for flow ${flow.flow_uid}:`, err);
       }
     }
+
+    console.log("res : ", results);
 
     setDashboardData(results);
   };
@@ -150,30 +154,29 @@ export default function Dashboard() {
   console.log("dashboardData : ", dashboardData);
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full">
       <DashboardSidebar />
-      <main className="flex-1 p-8 bg-gray-50 dark:bg-gray-950 overflow-y-auto">
+      <main className="flex-1 bg-gray-50 dark:bg-gray-950 overflow-y-auto p-12">
         {/* Dashboard Charts */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
-          Flow Outputs
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            Flow Outputs
+          </h1>
           {dashboardData.map((d) => {
             let chartElement: React.ReactElement | null = null;
 
             const mappedChartData = (() => {
               if (!d.data || !Array.isArray(d.data)) return [];
-              const values = d.data.map((row: any) => row.value ?? 0);
-              const total = values.reduce((acc, v) => acc + v, 0);
 
-              const mapped = values.map((v: number, i: number) => ({
-                name: rowName(d.data[i], i),
-                value: total ? (v / total) * 100 : v,
+              const xField = (d as any).vis_node_fields?.xField;
+              const yField = (d as any).vis_node_fields?.yField;
+
+              if (!xField || !yField) return [];
+
+              return d.data.map((row: any) => ({
+                name: row[xField],
+                value: row[yField],
               }));
-
-              return mapped;
-
-              function rowName(row: any, i: number) {
-                return row.name ?? `Item ${i + 1}`;
-              }
             })();
 
             switch (d.vis_node_type) {
@@ -247,7 +250,7 @@ export default function Dashboard() {
             return (
               <Card
                 key={d.vis_node_id}
-                className="p-4 border-violet-100 dark:border-gray-800 hover:shadow-md transition"
+                className="p-4 border-violet-100 dark:border-gray-800 hover:shadow-md transition w-fit"
               >
                 <h2 className="font-medium text-gray-800 dark:text-gray-100 mb-2 text-sm truncate">
                   {d.flow_name}:{d.vis_node_type}
@@ -255,7 +258,6 @@ export default function Dashboard() {
 
                 <ChartContainer
                   config={{ value: { label: "Value (%)", color: "#9f7aea" } }}
-                  className="w-full h-48"
                 >
                   {chartElement}
                 </ChartContainer>

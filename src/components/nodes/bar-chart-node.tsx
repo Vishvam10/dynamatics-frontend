@@ -82,6 +82,11 @@ export const BarChartNode = (props: NodeProps<BaseNodeData>) => {
       showSaveButton
       saveTooltipMessage="Add to dashboard"
       saveOnVisNodeType="bar-chart"
+      saveOnVisNodeId={id}
+      saveFields={{
+        xField,
+        yField,
+      }}
     >
       {/* X-axis selector */}
       {fields.length > 0 && (

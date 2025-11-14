@@ -47,6 +47,7 @@ export const ViewDataNode = (props: NodeProps<BaseNodeData>) => {
       showSaveButton={true}
       saveTooltipMessage={"Add to dashboard"}
       saveOnVisNodeType="data-table"
+      saveOnVisNodeId={id}
     >
       <div className="space-y-2 text-[10px] w-full min-w-[500px]">
         {tableData.length > 0 ? (

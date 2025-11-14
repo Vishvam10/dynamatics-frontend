@@ -92,6 +92,10 @@ export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
       showSaveButton
       saveTooltipMessage="Add to dashboard"
       saveOnVisNodeType="pie-chart"
+      saveOnVisNodeId={id}
+      saveFields={{
+        yField,
+      }}
     >
       {/* Values selector */}
       {fields.length > 0 && (

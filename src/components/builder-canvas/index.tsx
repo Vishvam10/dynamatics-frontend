@@ -353,9 +353,6 @@ export function BuilderCanvas() {
           flow_uid: flowUid || `flow_${Date.now()}`,
           flow_name: flowName,
           flow_graph: flow,
-          vis_node_type: null,
-          vis_node_id: null,
-          render_in_dashboard: false,
         }),
       });
 

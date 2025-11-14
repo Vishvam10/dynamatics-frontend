@@ -22,6 +22,7 @@ interface BaseNodeProps {
   saveTooltipMessage?: string;
   saveOnVisNodeType?: string;
   saveOnVisNodeId?: string;
+  saveFields?: Record<string, string>;
 }
 
 export function BaseNode({
@@ -35,6 +36,7 @@ export function BaseNode({
   saveTooltipMessage = "Save changes",
   saveOnVisNodeType = "",
   saveOnVisNodeId = "",
+  saveFields = {},
 }: BaseNodeProps) {
   const color = nodeColors[typeLabel] || nodeColors.Default;
   const { flowUid } = useBuilder();
@@ -54,6 +56,7 @@ export function BaseNode({
         flow_graph: flow,
         vis_node_type: saveOnVisNodeType,
         vis_node_id: saveOnVisNodeId,
+        vis_node_fields: saveFields,
         render_in_dashboard: true,
       };
 
@@ -62,6 +65,7 @@ export function BaseNode({
         payload["flow_uid"],
         payload["vis_node_type"],
         payload["vis_node_id"],
+        payload["vis_node_fields"],
         payload["render_in_dashboard"]
       );
 

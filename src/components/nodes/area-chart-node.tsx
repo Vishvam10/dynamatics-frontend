@@ -83,6 +83,11 @@ export const AreaChartNode = (props: NodeProps<BaseNodeData>) => {
       showSaveButton
       saveTooltipMessage="Add to dashboard"
       saveOnVisNodeType="area-chart"
+      saveOnVisNodeId={id}
+      saveFields={{
+        xField,
+        yField,
+      }}
     >
       {/* X-axis selector */}
       {fields.length > 0 && (
