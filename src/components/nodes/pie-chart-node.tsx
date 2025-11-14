@@ -55,9 +55,9 @@ export const PieChartNode = (props: NodeProps<BaseNodeData>) => {
         n.id === id
           ? {
               ...n,
+              config: { ...(n.data?.config || {}), yField },
               data: {
                 ...n.data,
-                config: { ...(n.data?.config || {}), yField },
               },
             }
           : n

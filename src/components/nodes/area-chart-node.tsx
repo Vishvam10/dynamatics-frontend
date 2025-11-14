@@ -49,9 +49,9 @@ export const AreaChartNode = (props: NodeProps<BaseNodeData>) => {
         n.id === id
           ? {
               ...n,
+              config: { ...(n.data?.config || {}), xField, yField },
               data: {
                 ...n.data,
-                config: { ...(n.data?.config || {}), xField, yField },
               },
             }
           : n
