@@ -171,7 +171,7 @@ export function BaseNode({
     >
       <ShineBorder
         duration={12}
-        borderWidth={3.5}
+        borderWidth={5}
         shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]}
         topOnly={true}
       ></ShineBorder>

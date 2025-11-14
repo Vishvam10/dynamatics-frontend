@@ -277,6 +277,20 @@ export function BuilderCanvas() {
     [setEdges, fetchAndUpdateNodeMetadata]
   );
 
+  // Ensure the callback parameter uses the correct node type
+  const onNodesDelete = useCallback(
+    (nodesToDelete: any) => {
+      setNodeFieldsTypeMap((prev: any) => {
+        const updated = { ...prev };
+        nodesToDelete.forEach((node: any) => {
+          delete updated[node.id];
+        });
+        return updated;
+      });
+    },
+    [setNodeFieldsTypeMap]
+  );
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -420,6 +434,7 @@ export function BuilderCanvas() {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        onNodesDelete={onNodesDelete}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

@@ -54,15 +54,13 @@ export const LineChartNode = (props: NodeProps<BaseNodeData>) => {
     );
   }, [id, xField, yField, setNodes]);
 
-  // Map data for chart (convert to percentages)
+  // Map data for chart (absolute values)
   useEffect(() => {
     if (!yField) return;
-    const values = actualData.map((row: any) => row[yField] ?? 0);
-    const total = values.reduce((acc: number, v: number) => acc + v, 0);
 
-    const mapped = values.map((v: number, i: number) => ({
-      name: xField ? actualData[i][xField] ?? `Item ${i + 1}` : `${i + 1}`,
-      value: total ? (v / total) * 100 : v,
+    const mapped = actualData.map((row: any, i: number) => ({
+      name: xField ? row[xField] ?? `Item ${i + 1}` : `${i + 1}`,
+      value: row[yField] ?? 0,
     }));
 
     setChartData(mapped);
@@ -122,12 +120,12 @@ export const LineChartNode = (props: NodeProps<BaseNodeData>) => {
 
       {/* Chart */}
       {hasData ? (
-        <div className="flex justify-center pt-2 w-80 h-48">
+        <div className="flex justify-center pt-2 w-120 h-60">
           <ChartContainer
-            config={{ value: { label: "Value (%)", color: "#9f7aea" } }}
+            config={{ value: { label: "Value", color: "#9f7aea" } }}
             className="w-full h-full"
           >
-            <LineChart width={300} height={150} data={chartData}>
+            <LineChart width={1200} height={300} data={chartData}>
               <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 10 }} />

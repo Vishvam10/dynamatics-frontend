@@ -19,21 +19,19 @@ export interface FilterConfig {
 }
 
 export const FilterNode = (props: NodeProps<BaseNodeData>) => {
-  const { nodeFieldsTypeMap } = useBuilder();
   const { id, data } = props;
+  const { nodeFieldsTypeMap } = useBuilder();
   const { setNodes } = useReactFlow();
 
-  // Initialize config with only the allowed keys
   const initialConfig: FilterConfig = {
     field: (data.config as FilterConfig)?.field || "",
     condition: (data.config as FilterConfig)?.condition || "",
     value1: (data.config as FilterConfig)?.value1 || "",
-    value2: (data.config as FilterConfig)?.value2,
+    value2: (data.config as FilterConfig)?.value2 || "",
   };
 
   const [config, setConfig] = useState<FilterConfig>(initialConfig);
 
-  // Keep local field types updated when builder context changes
   const [fieldTypes, setFieldTypes] = useState<Record<string, string>>(
     nodeFieldsTypeMap[id] || {}
   );
@@ -42,30 +40,26 @@ export const FilterNode = (props: NodeProps<BaseNodeData>) => {
     setFieldTypes(nodeFieldsTypeMap[id] || {});
   }, [nodeFieldsTypeMap, id]);
 
-  // Determine type of selected field and possible conditions
   const fieldType = config.field
     ? fieldTypes[config.field] || "string"
     : "string";
   const conditions = FILTERS[fieldType] || FILTERS.default;
 
-  // Update config locally
   const updateConfig = (key: keyof FilterConfig, value: string | number) => {
-    setConfig((prev) => ({ ...prev, [key]: value }));
+    // Parse numbers if needed
+    if (fieldType === "number" && (key === "value1" || key === "value2")) {
+      const parsed = value === "" ? "" : Number(value);
+      setConfig((prev) => ({ ...prev, [key]: parsed }));
+    } else {
+      setConfig((prev) => ({ ...prev, [key]: value }));
+    }
   };
 
-  console.log("nodeFieldsTypeMap : ", nodeFieldsTypeMap);
-
-  // Sync config to React Flow node whenever it changes
+  // Sync with React Flow
   useEffect(() => {
     setNodes((nds) =>
       nds.map((n) =>
-        n.id === id
-          ? {
-              ...n,
-              config: { ...config },
-              data: { ...n.data },
-            }
-          : n
+        n.id === id ? { ...n, config: { ...config }, data: { ...n.data } } : n
       )
     );
   }, [config, id, setNodes]);
@@ -101,7 +95,7 @@ export const FilterNode = (props: NodeProps<BaseNodeData>) => {
           ))}
         </select>
 
-        {/* Value1 input */}
+        {/* Value1 */}
         <input
           className="border rounded p-1 text-xs w-16"
           type={fieldType === "number" ? "number" : "text"}
@@ -110,12 +104,12 @@ export const FilterNode = (props: NodeProps<BaseNodeData>) => {
           placeholder="Value1"
         />
 
-        {/* Value2 input only for 'between' */}
+        {/* Value2 only for 'between' */}
         {config.condition === "between" && (
           <input
             className="border rounded p-1 text-xs w-16"
             type={fieldType === "number" ? "number" : "text"}
-            value={config.value2 || ""}
+            value={config.value2}
             onChange={(e) => updateConfig("value2", e.target.value)}
             placeholder="Value2"
           />

@@ -33,6 +33,7 @@ import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [flowName, setFlowName] = useState("");
@@ -43,21 +44,19 @@ export default function Dashboard() {
       render_in_dashboard?: boolean;
       vis_node_id?: string;
       vis_node_type?: string;
+      vis_node_fields?: Record<string, string>;
     }[]
   >([]);
-
   const [dashboardData, setDashboardData] = useState<
     {
       flow_uid: string;
       flow_name: string;
       vis_node_id: string;
       vis_node_type: string;
-      data: any;
+      data: any[];
+      vis_node_fields?: Record<string, string>;
     }[]
   >([]);
-
-  console.log("dashboardData : ", dashboardData);
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
   // Fetch all flows
   const fetchFlows = async () => {
@@ -65,7 +64,7 @@ export default function Dashboard() {
       const res = await fetch(`${apiUrl}/api/flows`);
       const json = await res.json();
 
-      // Deduplicate flows by flow_uid for flow list
+      // Deduplicate flows by flow_uid
       const uniqueFlowsMap = new Map<string, any>();
       (json.data || []).forEach((flow: any) => {
         if (!uniqueFlowsMap.has(flow.flow_uid)) {
@@ -75,13 +74,15 @@ export default function Dashboard() {
             vis_node_id: flow.vis_node_id || "",
             vis_node_type: flow.vis_node_type || "",
             render_in_dashboard: flow.render_in_dashboard,
+            vis_node_fields: flow.vis_node_fields || {},
           });
         }
       });
+
       const mappedFlows = Array.from(uniqueFlowsMap.values());
       setFlows(mappedFlows);
 
-      // Only fetch data for flows with render_in_dashboard
+      // Fetch dashboard data only for flows that should render
       const dashboardFlows = mappedFlows.filter((f) => f.render_in_dashboard);
       fetchDashboardData(dashboardFlows);
     } catch (err) {
@@ -89,6 +90,7 @@ export default function Dashboard() {
     }
   };
 
+  // Fetch flow outputs and include visualizations
   const fetchDashboardData = async (flowsToRender: typeof flows) => {
     const results: typeof dashboardData = [];
 
@@ -102,19 +104,26 @@ export default function Dashboard() {
           }
         );
         const json = await res.json();
-        console.log("data : ", json);
 
-        // Filter by vis_node_id to get the specific node's output
         (json.data || []).forEach((node: any) => {
-          // Only process the node that matches vis_node_id
-          console.log("vis_node_id : ", flow.vis_node_id);
-          if (flow.vis_node_id && node.node_id === flow.vis_node_id) {
+          const isVisNode = [
+            "lineChart",
+            "barChart",
+            "areaChart",
+            "pieChart",
+          ].includes(node.type);
+
+          if (
+            (flow.vis_node_id && node.node_id === flow.vis_node_id) ||
+            isVisNode
+          ) {
             results.push({
               flow_uid: flow.flow_uid,
               flow_name: flow.flow_name,
               vis_node_id: node.node_id,
-              vis_node_type: flow.vis_node_type || "data-table",
+              vis_node_type: flow.vis_node_type || node.type || "data-table",
               data: node.output || [],
+              vis_node_fields: node.config || {},
             });
           }
         });
@@ -122,8 +131,6 @@ export default function Dashboard() {
         console.error(`Failed to fetch data for flow ${flow.flow_uid}:`, err);
       }
     }
-
-    console.log("res : ", results);
 
     setDashboardData(results);
   };
@@ -151,14 +158,12 @@ export default function Dashboard() {
     }
   };
 
-  console.log("dashboardData : ", dashboardData);
-
   return (
     <div className="flex h-full w-full">
       <DashboardSidebar />
       <main className="flex-1 bg-gray-50 dark:bg-gray-950 overflow-y-auto p-12">
         {/* Dashboard Charts */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+        <div className="flex flex-col gap-4 mb-12">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             Flow Outputs
           </h1>
@@ -168,8 +173,8 @@ export default function Dashboard() {
             const mappedChartData = (() => {
               if (!d.data || !Array.isArray(d.data)) return [];
 
-              const xField = (d as any).vis_node_fields?.xField;
-              const yField = (d as any).vis_node_fields?.yField;
+              const xField = d.vis_node_fields?.xField;
+              const yField = d.vis_node_fields?.yField;
 
               if (!xField || !yField) return [];
 
@@ -232,14 +237,14 @@ export default function Dashboard() {
                       dataKey="value"
                       nameKey="name"
                       fill="#9f7aea"
-                      label={(entry) => `${entry.value.toFixed(1)}%`}
+                      label={(entry) => `${entry.value}`}
                     />
                     <Tooltip content={<ChartTooltipContent hideLabel />} />
                   </PieChart>
                 );
                 break;
               case "data-table":
-                chartElement = <DataTable data={d.data} />;
+                chartElement = <DataTable data={d.data} pageSize={10} />;
                 break;
               default:
                 chartElement = null;
@@ -250,14 +255,13 @@ export default function Dashboard() {
             return (
               <Card
                 key={d.vis_node_id}
-                className="p-4 border-violet-100 dark:border-gray-800 hover:shadow-md transition w-fit"
+                className="p-4 border-violet-100 dark:border-gray-800 hover:shadow-md transition max-w-120 overflow-scroll"
               >
                 <h2 className="font-medium text-gray-800 dark:text-gray-100 mb-2 text-sm truncate">
-                  {d.flow_name}:{d.vis_node_type}
+                  {d.flow_name} ({d.vis_node_type})
                 </h2>
-
                 <ChartContainer
-                  config={{ value: { label: "Value (%)", color: "#9f7aea" } }}
+                  config={{ value: { label: "Value", color: "#9f7aea" } }}
                 >
                   {chartElement}
                 </ChartContainer>
