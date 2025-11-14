@@ -72,8 +72,8 @@ export default function Dashboard() {
           uniqueFlowsMap.set(flow.flow_uid, {
             flow_uid: flow.flow_uid,
             flow_name: flow.flow_name || "Unnamed Flow",
-            render_node_id: flow.vis_node_type || "",
-            render_node_type: flow.vis_node_type || "",
+            vis_node_id: flow.vis_node_id || "",
+            vis_node_type: flow.vis_node_type || "",
             render_in_dashboard: flow.render_in_dashboard,
           });
         }
@@ -103,18 +103,18 @@ export default function Dashboard() {
         );
         const json = await res.json();
 
+        // Filter by vis_node_id to get the specific node's output
         (json.data || []).forEach((node: any) => {
-          if (!flow.vis_node_id || node.node_id !== flow.vis_node_id)
-            return;
-
-          results.push({
-            flow_uid: flow.flow_uid,
-            flow_name: flow.flow_name,
-            vis_node_id: node.node_id,
-            vis_node_type:
-              flow.vis_node_type || node.output?.[0]?.type || "data-table",
-            data: node.output || [],
-          });
+          // Only process the node that matches vis_node_id
+          if (flow.vis_node_id && node.node_id === flow.vis_node_id) {
+            results.push({
+              flow_uid: flow.flow_uid,
+              flow_name: flow.flow_name,
+              vis_node_id: node.node_id,
+              vis_node_type: flow.vis_node_type || "data-table",
+              data: node.output || [],
+            });
+          }
         });
       } catch (err) {
         console.error(`Failed to fetch data for flow ${flow.flow_uid}:`, err);
