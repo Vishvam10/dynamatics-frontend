@@ -37,16 +37,30 @@ export default function Dashboard() {
 
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [flowName, setFlowName] = useState("");
-  const [flows, setFlows] = useState<
+  
+  // All flows for "Your Flows" section
+  const [allFlows, setAllFlows] = useState<
     {
       flow_uid: string;
       flow_name: string;
-      render_in_dashboard?: boolean;
+      flow_graph?: any;
+    }[]
+  >([]);
+
+  // Dashboard flows with visualization config
+  const [dashboardFlows, setDashboardFlows] = useState<
+    {
+      _id?: string;
+      flow_uid: string;
+      flow_name: string;
       vis_node_id?: string;
       vis_node_type?: string;
       vis_node_fields?: Record<string, string>;
+      render_in_dashboard?: boolean;
     }[]
   >([]);
+
+  // Dashboard visualization data
   const [dashboardData, setDashboardData] = useState<
     {
       flow_uid: string;
@@ -58,40 +72,53 @@ export default function Dashboard() {
     }[]
   >([]);
 
-  // Fetch all flows
-  const fetchFlows = async () => {
+  // Fetch all flows for "Your Flows" section
+  const fetchAllFlows = async () => {
     try {
       const res = await fetch(`${apiUrl}/api/flows`);
       const json = await res.json();
 
-      // Deduplicate flows by flow_uid
-      const uniqueFlowsMap = new Map<string, any>();
-      (json.data || []).forEach((flow: any) => {
-        if (!uniqueFlowsMap.has(flow.flow_uid)) {
-          uniqueFlowsMap.set(flow.flow_uid, {
-            flow_uid: flow.flow_uid,
-            flow_name: flow.flow_name || "Unnamed Flow",
-            vis_node_id: flow.vis_node_id || "",
-            vis_node_type: flow.vis_node_type || "",
-            render_in_dashboard: flow.render_in_dashboard,
-            vis_node_fields: flow.vis_node_fields || {},
-          });
-        }
-      });
+      const flows = (json.data || []).map((flow: any) => ({
+        flow_uid: flow.flow_uid,
+        flow_name: flow.flow_name || "Unnamed Flow",
+        flow_graph: flow.flow_graph,
+      }));
 
-      const mappedFlows = Array.from(uniqueFlowsMap.values());
-      setFlows(mappedFlows);
-
-      // Fetch dashboard data only for flows that should render
-      const dashboardFlows = mappedFlows.filter((f) => f.render_in_dashboard);
-      fetchDashboardData(dashboardFlows);
+      setAllFlows(flows);
     } catch (err) {
-      console.error("Failed to fetch flows:", err);
+      console.error("Failed to fetch all flows:", err);
+    }
+  };
+
+  // Fetch dashboard flows (only flows with render_in_dashboard: true)
+  const fetchDashboardFlows = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/dashboard/flows`);
+      const json = await res.json();
+
+      const flows = (json.data || []).map((flow: any) => ({
+        _id: flow._id,
+        flow_uid: flow.flow_uid,
+        flow_name: flow.flow_name || "Unnamed Flow",
+        vis_node_id: flow.vis_node_id || "",
+        vis_node_type: flow.vis_node_type || "data-table",
+        vis_node_fields: flow.vis_node_fields || {},
+        render_in_dashboard: flow.render_in_dashboard,
+      }));
+
+      setDashboardFlows(flows);
+      
+      // Fetch data for dashboard flows
+      if (flows.length > 0) {
+        fetchDashboardData(flows);
+      }
+    } catch (err) {
+      console.error("Failed to fetch dashboard flows:", err);
     }
   };
 
   // Fetch flow outputs and include visualizations
-  const fetchDashboardData = async (flowsToRender: typeof flows) => {
+  const fetchDashboardData = async (flowsToRender: typeof dashboardFlows) => {
     const results: typeof dashboardData = [];
 
     for (const flow of flowsToRender) {
@@ -111,6 +138,7 @@ export default function Dashboard() {
             "barChart",
             "areaChart",
             "pieChart",
+            "data-table",
           ].includes(node.type);
 
           if (
@@ -123,7 +151,7 @@ export default function Dashboard() {
               vis_node_id: node.node_id,
               vis_node_type: flow.vis_node_type || node.type || "data-table",
               data: node.output || [],
-              vis_node_fields: node.config || {},
+              vis_node_fields: flow.vis_node_fields || node.config || {},
             });
           }
         });
@@ -136,7 +164,8 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchFlows();
+    fetchAllFlows();
+    fetchDashboardFlows();
   }, []);
 
   const handleCreateFlow = () => navigate("/builder");
@@ -150,7 +179,8 @@ export default function Dashboard() {
       });
       if (!res.ok) throw new Error("Failed to delete flow");
 
-      setFlows((prev) => prev.filter((f) => f.flow_uid !== flow_uid));
+      setAllFlows((prev) => prev.filter((f) => f.flow_uid !== flow_uid));
+      setDashboardFlows((prev) => prev.filter((f) => f.flow_uid !== flow_uid));
       setDashboardData((prev) => prev.filter((d) => d.flow_uid !== flow_uid));
     } catch (err) {
       console.error("Failed to delete flow:", err);
@@ -282,7 +312,7 @@ export default function Dashboard() {
 
         {/* Flows List */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {flows.map((flow) => (
+          {allFlows.map((flow) => (
             <Card
               key={flow.flow_uid}
               className="flex flex-row items-center justify-between p-4 border-violet-100 dark:border-gray-800 hover:shadow-md hover:border-violet-400 transition cursor-pointer"
