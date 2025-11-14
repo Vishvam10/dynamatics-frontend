@@ -7,7 +7,7 @@ export const LogicalOrNode = (props: NodeProps<BaseNodeData>) => {
     <BaseNode
       title="Logical Or"
       typeLabel="Boolean"
-      inputs={4}
+      inputs={2}
       outputs={1}
     >This gate performs an <br></br> OR operation on <br></br>previous filters</BaseNode>
   );

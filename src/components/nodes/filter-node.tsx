@@ -5,7 +5,7 @@ import { useBuilder } from "@/contexts/builder-context";
 import type { BaseNodeData } from "@/types/node-data";
 
 const FILTERS: Record<string, string[]> = {
-  number: ["gt", "gte", "lt", "lte", "eq", "neq", "between"],
+  number: ["gt", "gte", "lt", "lte", "eq", "neq", "range"],
   string: ["contains", "ncontains", "startswith", "nstartswith", "eq", "neq"],
   boolean: ["eq", "neq"],
   default: ["eq", "neq"],
@@ -104,8 +104,8 @@ export const FilterNode = (props: NodeProps<BaseNodeData>) => {
           placeholder="Value1"
         />
 
-        {/* Value2 only for 'between' */}
-        {config.condition === "between" && (
+        {/* Value2 only for 'range' */}
+        {config.condition === "range" && (
           <input
             className="border rounded p-1 text-xs w-16"
             type={fieldType === "number" ? "number" : "text"}

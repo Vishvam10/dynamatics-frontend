@@ -10,7 +10,6 @@ export const ViewDataNode = (props: NodeProps<BaseNodeData>) => {
   const executedData = data.executionData ?? [];
 
   const { setNodes } = useReactFlow();
-  const { flowUid } = useBuilder();
 
   // State for column search
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,9 +42,9 @@ export const ViewDataNode = (props: NodeProps<BaseNodeData>) => {
         n.id === id
           ? {
               ...n,
+              config: { ...(n.data?.config ?? {}) },
               data: {
                 ...n.data,
-                config: { ...(n.data?.config ?? {}) },
                 metadata: { ...(n.data?.metadata ?? {}) },
               },
             }
@@ -75,13 +74,16 @@ export const ViewDataNode = (props: NodeProps<BaseNodeData>) => {
           className="w-full border rounded p-1 text-xs focus:ring-1 focus:ring-purple-300"
         />
 
-        {filteredTableData.length > 0 ? (
-          <DataTable data={filteredTableData} pageSize={10} />
-        ) : (
-          <div className="text-gray-400 text-[10px] text-center py-8 border rounded">
-            No data yet or no matching columns.
-          </div>
-        )}
+        {/* Scrollable table container */}
+        <div className="w-full max-w-full h-64 overflow-auto border rounded">
+          {filteredTableData.length > 0 ? (
+            <DataTable data={filteredTableData} pageSize={10} />
+          ) : (
+            <div className="text-gray-400 text-[10px] text-center py-8">
+              No data yet or no matching columns.
+            </div>
+          )}
+        </div>
       </div>
     </BaseNode>
   );
