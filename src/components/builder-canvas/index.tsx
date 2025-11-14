@@ -41,6 +41,7 @@ import {
 
   // Machine Learning Nodes
   AnomalyDetectionNode,
+  ForecastNode,
 
   // View Nodes
   ViewDataNode,
@@ -87,7 +88,7 @@ export function BuilderCanvas() {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [flowName, setFlowName] = useState("");
 
-  console.log("flowUid, flowName : ", flowUid, flowName);
+  // console.log("flowUid, flowName : ", flowUid, flowName);
 
   // -------------------------
   // Node Types
@@ -99,6 +100,7 @@ export function BuilderCanvas() {
       group: GroupNode,
       merge: MergeNode,
       anomalyDetection: AnomalyDetectionNode,
+      forecast: ForecastNode,
       logicalAnd: LogicalAndNode,
       logicalOr: LogicalOrNode,
       exampleData: ExampleDataNode,
@@ -304,7 +306,7 @@ export function BuilderCanvas() {
 
       setNodes((nds) => [...nds, node]);
       // If Machine Learning node, show wow.gif at drop location
-      if (type === "anomalyDetection") {
+      if (type === "anomalyDetection" || type === "forecast") {
         setCanvasGifs((prev) => [
           ...prev,
           { id: `gif-${nodeId}`, x: event.clientX - 280, y: event.clientY },
@@ -423,6 +425,7 @@ export function BuilderCanvas() {
         onConnect={onConnect}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        // zoomOnScroll={false}
         fitView
         isValidConnection={(connection) =>
           !edges.some(

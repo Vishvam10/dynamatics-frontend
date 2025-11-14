@@ -12,7 +12,7 @@ export const ViewDataNode = (props: NodeProps<BaseNodeData>) => {
   const { setNodes } = useReactFlow();
   const { flowUid } = useBuilder();
 
-  console.log("flowUid in view : ", flowUid);
+  // console.log("flowUid in view : ", flowUid);
 
   // Memoize tableData for this node
   const tableData = useMemo(() => {

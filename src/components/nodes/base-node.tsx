@@ -166,12 +166,12 @@ export function BaseNode({
   return typeLabel === "Machine Learning" ? (
     <div
       className={cn(
-        "relative text-xs rounded-lg bg-white shadow-sm flex flex-col min-w-32"
+        "relative text-xs rounded-lg bg-white shadow-sm flex flex-col min-w-32 p-1"
       )}
     >
       <ShineBorder
         duration={12}
-        borderWidth={3}
+        borderWidth={3.5}
         shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]}
         topOnly={true}
       ></ShineBorder>

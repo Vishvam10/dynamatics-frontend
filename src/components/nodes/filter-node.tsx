@@ -53,6 +53,8 @@ export const FilterNode = (props: NodeProps<BaseNodeData>) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
   };
 
+  console.log("nodeFieldsTypeMap : ", nodeFieldsTypeMap);
+
   // Sync config to React Flow node whenever it changes
   useEffect(() => {
     setNodes((nds) =>

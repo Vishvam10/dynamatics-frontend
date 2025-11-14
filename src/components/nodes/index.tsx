@@ -9,6 +9,7 @@ import { LogicalAndNode } from "./logical-and-node";
 import { LogicalOrNode } from "./logical-or-node";
 
 import { AnomalyDetectionNode } from "./anamoly-detection-node";
+import { ForecastNode } from "./forecast-node";
 
 import { BarChartNode } from "./bar-chart-node";
 import { LineChartNode } from "./line-chart-node";
@@ -24,6 +25,7 @@ export {
   GroupNode,
   MergeNode,
   AnomalyDetectionNode,
+  ForecastNode,
   LogicalAndNode,
   LogicalOrNode,
   BarChartNode,

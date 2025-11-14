@@ -148,7 +148,7 @@ export const ExampleDataNode = (props: NodeProps<BaseNodeData>) => {
         onChange={(e) => setDataset(e.target.value)}
       >
         <option value="">Select dataset...</option>
-        <option value="brandkit">Brandkit</option>
+        <option value="brandkit1">Brandkit</option>
         <option value="automate">Automate</option>
         <option value="launch">Launch</option>
         <option value="cms">CMS</option>

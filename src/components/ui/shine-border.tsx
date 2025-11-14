@@ -29,8 +29,8 @@ export function ShineBorder({
   }, transparent, transparent)`;
 
   const mask = topOnly
-    ? `linear-gradient(to bottom, #fff 0 ${borderWidth}px, transparent ${borderWidth}px 100%)`
-    : `linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)`;
+    ? `linear-gradient(to bottom, #fffa 0 ${borderWidth}px, transparent ${borderWidth}px 100%)`
+    : `linear-gradient(#fffa 0 0) content-box, linear-gradient(#fffa 0 0)`;
 
   return (
     <div

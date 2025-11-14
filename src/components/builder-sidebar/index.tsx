@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { nodeColors } from "@/utils/node-colours";
+import { ShineCircle } from "../ui/shine-circle";
 
 const sidebarNodes = [
   // --- Data ---
@@ -10,7 +11,6 @@ const sidebarNodes = [
     input: "None",
     output: "Dataset",
   },
-  // --- Transform ---
   {
     type: "filter",
     label: "Filter",
@@ -25,7 +25,6 @@ const sidebarNodes = [
     input: "Dataset",
     output: "Dataset",
   },
-  // --- Aggregation ---
   {
     type: "group",
     label: "Group",
@@ -40,7 +39,6 @@ const sidebarNodes = [
     input: "Dataset",
     output: "Dataset",
   },
-  // --- Logical ---
   {
     type: "logicalAnd",
     label: "Logic And",
@@ -55,7 +53,6 @@ const sidebarNodes = [
     input: "Dataset",
     output: "Dataset",
   },
-  // --- Machine Learning ---
   {
     type: "anomalyDetection",
     label: "Anomaly Detection",
@@ -63,8 +60,13 @@ const sidebarNodes = [
     input: "Dataset",
     output: "Dataset",
   },
-
-  // --- Export ---
+  {
+    type: "forecast",
+    label: "Forecast",
+    category: "Machine Learning",
+    input: "Dataset",
+    output: "Dataset",
+  },
   {
     type: "export",
     label: "View Data",
@@ -72,8 +74,6 @@ const sidebarNodes = [
     input: "Dataset",
     output: "None",
   },
-
-  // --- Visualization ---
   {
     type: "pieChart",
     label: "Pie Chart",
@@ -172,7 +172,9 @@ export function BuilderSidebar() {
 
             <div className="space-y-2">
               {nodes.map(({ type, label, input, output, category }) => {
+                const isMLNode = category === "Machine Learning";
                 const color = nodeColors[category] || nodeColors.Default;
+
                 return (
                   <div
                     key={type}
@@ -184,10 +186,14 @@ export function BuilderSidebar() {
                   >
                     {/* Header */}
                     <div className="border-b px-2 py-1.5 flex items-center gap-2">
-                      <span
-                        className="w-3 h-3 rounded-full shrink-0"
-                        style={{ backgroundColor: color }}
-                      />
+                      {isMLNode ? (
+                        <ShineCircle size={12} borderWidth={3} duration={12} />
+                      ) : (
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: color }}
+                        />
+                      )}
                       <div className="flex flex-col leading-tight">
                         <span className="text-[12px] font-medium text-gray-800">
                           {label}
